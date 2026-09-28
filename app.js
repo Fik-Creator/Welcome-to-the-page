@@ -360,14 +360,17 @@ async function sendMessage(e){
 }
 async function hydrate(){
   try{
-    const [p,pr,o,posts,likes,follows]=await Promise.all([
-      sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(80),
+    const [p,pr,o,posts,follows]=await Promise.all([
+      sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').order('created_at',{ascending:false}).limit(80),
       sb.from('projects').select('*').order('created_at',{ascending:false}).limit(40),
       sb.from('opportunities').select('*').order('created_at',{ascending:false}).limit(40),
       sb.from('posts').select('id,author_id,content,media_url,created_at,profiles(id,full_name,username,headline,avatar_url)').order('created_at',{ascending:false}).limit(40),
-      sb.from('post_likes').select('post_id,user_id').limit(2000),
       state.user?sb.from('follows').select('following_id').eq('follower_id',state.user.id).limit(500):Promise.resolve({data:[]})
     ]);
+    const postIds=(posts.data||[]).map(x=>x.id);
+    const likes=postIds.length
+      ? await sb.from('post_likes').select('post_id,user_id').in('post_id',postIds).limit(2000)
+      : {data:[]};
     if(p.data?.length)state.profiles=p.data;
     else if(!state.profiles.length)state.profiles=DEMO.profiles.slice();
     if(pr.data?.length)state.projects=pr.data;
