@@ -110,3 +110,7 @@ select.input{appearance:auto;padding-right:34px;cursor:pointer}.input:focus,sele
 .mobile-logo .rp-wordmark{width:132px}
 @media(max-width:1100px){.sidebar-brand{justify-content:center}.sidebar .rp-wordmark{display:none}.sidebar-brand .rp-mark{display:inline-grid}}
 @media(max-width:720px){.mobile-logo .rp-wordmark{width:126px}.person-card .avatar.xl{width:96px;height:96px}}
+
+.brand-lockup>.rp-mark{display:none}
+@media(max-width:1100px) and (min-width:721px){.brand-lockup>.rp-mark{display:inline-grid}.sidebar .rp-wordmark{display:none}}
+@media(max-width:720px){.brand-lockup>.rp-mark{display:none}.mobile-logo .rp-wordmark{display:block}}
