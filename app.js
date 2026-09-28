@@ -46,7 +46,7 @@ function logoMark(size='md') {
   return '<span class="rp-mark '+cls+'" aria-label="ReelPage"><img src="reelpage-mark.svg" alt="" loading="lazy"></span>';
 }
 function brand(compact=false){
-  return '<div class="brand-lockup"><img class="rp-wordmark" src="reelpage-logo.svg" alt="ReelPage" loading="eager"></div>';
+  return '<div class="brand-lockup">'+logoMark('sm')+'<img class="rp-wordmark" src="reelpage-logo.svg" alt="ReelPage" loading="eager"></div>';
 };
 function icon(name,size=18){ return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.home}</svg>`; }
 
