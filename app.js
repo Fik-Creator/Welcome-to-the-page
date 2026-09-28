@@ -43,33 +43,17 @@ function profilePlace(p){return [p?.location,countryDisplay(p?.country)].filter(
 
 function logoMark(size='md') {
   const cls = size==='xs'?'rp-xs':size==='sm'?'rp-sm':size==='lg'?'rp-lg':'rp-md';
-  return '<span class="rp-mark '+cls+'" aria-label="ReelPage"><img src="reelpage-logo.svg" alt="ReelPage logo"></span>';
+  return '<span class="rp-mark '+cls+'" aria-label="ReelPage"><img src="reelpage-mark.svg" alt="" loading="lazy"></span>';
 }
-function brand(compact=false){ return `<div class="brand-lockup">${logoMark(compact?'sm':'md')}<span>REEL<span>PAGE</span></span></div>`; }
-
-const ICONS = {
-  home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/>',
-  discover:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
-  projects:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5M16 4v5"/>',
-  opportunities:'<path d="M12 2 14.7 9.3 22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7Z"/>',
-  messages:'<path d="M4 5h16v11H8l-4 4Z"/><path d="M8 9h8M8 12h5"/>',
-  profile:'<circle cx="12" cy="8" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/>',
-  plus:'<path d="M12 5v14M5 12h14"/>',
-  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
-  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
-  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
-  heart:'<path d="M20.8 8.7c0 5-8.8 10.3-8.8 10.3S3.2 13.7 3.2 8.7A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.6Z"/>',
-  send:'<path d="m3 11 18-8-8 18-2-7Z"/><path d="m11 14 5-5"/>',
-  close:'<path d="m6 6 12 12M18 6 6 18"/>',
-  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
-  film:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 9h16M8 5v4M16 5v4M8 19v-6M16 19v-6"/>'
+function brand(compact=false){
+  return '<div class="brand-lockup"><img class="rp-wordmark" src="reelpage-logo.svg" alt="ReelPage" loading="eager"></div>';
 };
 function icon(name,size=18){ return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.home}</svg>`; }
 
 function avatar(user,cls=''){
   const name=typeof user==='string'?user:(user?.full_name||user?.name||'ReelPage');
   const url=typeof user==='object'&&user?user.avatar_url:'';
-  return url ? `<div class="avatar ${cls}"><img src="${esc(url)}" alt="${esc(name)}"></div>`
+  return url ? `<div class="avatar ${cls}"><img src="${esc(url)}" alt="${esc(name)}" loading="lazy"></div>`
     : `<div class="avatar ${cls}">${logoMark('xs')}<span>${esc(initials(name))}</span></div>`;
 }
 
