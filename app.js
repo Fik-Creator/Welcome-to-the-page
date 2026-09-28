@@ -240,9 +240,10 @@ async function submitAuth(){
   const payload={action:state.authMode,username,password};
   if(state.authMode==='signup'){
     payload.full_name=(document.getElementById('authName')?.value||'').trim();
-    payload.role=(document.getElementById('authRole')?.value||'').trim()||'Creative';
+    payload.role=(document.getElementById('authRole')?.value||'').trim();
     payload.location=(document.getElementById('authLocation')?.value||'Nigeria').trim()||'Nigeria';
     if(payload.full_name.length<2){state.loading=false;render();return showToast('Please enter your full name.');}
+    if(!payload.role){state.loading=false;render();return showToast('Please select your professional role.');}
   }
   try{
     const res=await fetch(AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
