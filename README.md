@@ -1,47 +1,53 @@
 # REELPAGE
 
-REELPAGE is a responsive professional creative network built for actors, writers, directors, producers, crew and creative businesses — starting with Nollywood.
+REELPAGE is a responsive professional creative network for actors, writers, directors, producers, crew and creative businesses — starting with Nollywood.
 
-## Product direction
+## Current MVP
 
-Inspired by professional networking patterns found across LinkedIn, Stage 32 and IMDbPro-style industry profiles, ReelPage focuses on:
-
-- professional creative profiles and headshots
-- skills, headlines, bios and profile completion
-- projects and creative portfolios
-- networking with Connect and Follow
-- a professional creative feed with likes
-- casting, crew, writing and collaboration opportunities
-- responsive desktop, tablet and mobile navigation
-- Supabase-backed data and public media storage
-- no-email username/password onboarding for a smoother first experience
+- Black / white / gold cinematic ReelPage brand system.
+- ReelPage mark used in navigation, mobile navigation, favicon, profile avatars, empty states, hero and cards.
+- Username + password onboarding with no email collection or verification step.
+- Supabase Auth, Postgres, Row Level Security and Storage.
+- Creative profiles with photo, cover image, headline, bio and skills.
+- Creative feed with image posts and likes.
+- Follow system.
+- Projects and opportunities.
+- Opportunity applications.
+- Direct messages between registered creatives.
+- Responsive desktop, tablet and mobile navigation.
+- Lazy-loaded post media and bounded list queries for a stable first release.
 
 ## Stack
 
-- Static responsive frontend
-- Supabase Postgres + Row Level Security
-- Supabase Auth
-- Supabase Storage
-- Supabase Edge Function for username/password authentication
-- GitHub Pages workflow for static hosting
+- Static HTML/CSS/JavaScript frontend.
+- Supabase Postgres + Row Level Security.
+- Supabase Auth.
+- Supabase Storage.
+- Supabase Edge Function: `reelpage-auth`.
+- GitHub Pages deployment workflow.
+
+## Production notes
+
+The app is designed as a lightweight first production release. It uses indexed Supabase queries and capped feed/list reads so a first community of around 1,000 users can use the platform without the frontend attempting to load the entire database at once.
+
+No software can honestly guarantee zero glitches for every device or traffic pattern, so production monitoring and iterative testing remain part of the launch process.
+
+## Hosting
+
+The repository contains a GitHub Pages workflow at `.github/workflows/pages.yml`. GitHub Pages can publish directly from GitHub Actions. GitHub's documentation describes the workflow and custom-domain setup.
+
+Default project URL after Pages is enabled:
+`https://fik-creator.github.io/Welcome-to-the-page/`
+
+For a custom REELPAGE domain, configure the domain in GitHub Pages and then add the required DNS record at the domain provider. GitHub recommends verifying a custom domain before attaching it to the repository.
 
 ## Supabase
 
 Project: REELPAGE  
 Region: eu-west-1
 
-The browser only uses the Supabase publishable key. The service-role key is used only inside the deployed Supabase Edge Function and is never placed in frontend code.
-
-## Hosting
-
-The repository includes a GitHub Pages deployment workflow at .github/workflows/pages.yml.
-
-For GitHub Pages, the repository owner must enable **Settings → Pages → Source → GitHub Actions** once. After that, pushes to main deploy the site automatically. GitHub documents this workflow here:
-
-https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
-
-For Vercel, import this repository and set the project name to **REELPAGE**.
+The browser contains only the Supabase publishable key. The service-role credential remains inside the deployed Edge Function.
 
 ## Security
 
-Row Level Security is enabled across application tables, media buckets are protected for authenticated uploads, and the public auth trigger has no API execute permission.
+Row Level Security is enabled across application tables. Media uploads are scoped to the authenticated user's folder, while public media buckets allow public viewing of published images. The username/password Edge Function creates confirmed internal auth identities without asking users for an email address.
