@@ -42,13 +42,8 @@ function profilePlace(p){return [p?.location,countryDisplay(p?.country)].filter(
 
 
 function logoMark(size='md') {
-  return `<span class="rp-mark rp-${size}" aria-label="ReelPage"><svg viewBox="0 0 64 64" aria-hidden="true">
-    <rect x="5" y="5" width="54" height="54" rx="14" fill="#1687ff"/>
-    <path d="M18 49V15h16.5c8.2 0 13.5 4.8 13.5 12s-5.3 12-13.5 12H26v10H18Zm8-17h8c3.8 0 6-1.7 6-5s-2.2-5-6-5h-8v10Z" fill="#050505"/>
-    <circle cx="43.5" cy="19.5" r="9.5" fill="#050505"/>
-    <circle cx="43.5" cy="19.5" r="3" fill="#1687ff"/>
-    <circle cx="43.5" cy="10.8" r="2.1" fill="#1687ff"/><circle cx="51.1" cy="15.2" r="2.1" fill="#1687ff"/><circle cx="51.1" cy="23.8" r="2.1" fill="#1687ff"/><circle cx="43.5" cy="28.2" r="2.1" fill="#1687ff"/><circle cx="35.9" cy="23.8" r="2.1" fill="#1687ff"/><circle cx="35.9" cy="15.2" r="2.1" fill="#1687ff"/>
-  </svg></span>`;
+  const cls = size==='xs'?'rp-xs':size==='sm'?'rp-sm':size==='lg'?'rp-lg':'rp-md';
+  return '<span class="rp-mark '+cls+'" aria-label="ReelPage"><img src="reelpage-logo.svg" alt="ReelPage logo"></span>';
 }
 function brand(compact=false){ return `<div class="brand-lockup">${logoMark(compact?'sm':'md')}<span>REEL<span>PAGE</span></span></div>`; }
 
