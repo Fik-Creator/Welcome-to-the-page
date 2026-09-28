@@ -3,8 +3,8 @@
   "short_name":"REELPAGE",
   "start_url":".",
   "display":"standalone",
-  "background_color":"#050505",
-  "theme_color":"#050505",
+  "background_color":"#071322",
+  "theme_color":"#1687ff",
   "description":"The professional creative network, starting with Nollywood.",
   "icons":[{"src":"favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
