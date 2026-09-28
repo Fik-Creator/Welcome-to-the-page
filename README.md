@@ -4,7 +4,7 @@ REELPAGE is a responsive professional creative network for actors, writers, dire
 
 ## Current MVP
 
-- Black / white / gold cinematic ReelPage brand system.
+- Blue / black cinematic ReelPage brand system with a reel + P mark.
 - ReelPage mark used in navigation, mobile navigation, favicon, profile avatars, empty states, hero and cards.
 - Username + password onboarding with no email collection or verification step.
 - Supabase Auth, Postgres, Row Level Security and Storage.
@@ -28,7 +28,7 @@ REELPAGE is a responsive professional creative network for actors, writers, dire
 
 ## Production notes
 
-The app is designed as a lightweight first production release. It uses indexed Supabase queries and capped feed/list reads so a first community of around 1,000 users can use the platform without the frontend attempting to load the entire database at once.
+The frontend uses bounded Supabase queries, indexed data access, lazy media loading patterns and debounced search rendering. It is structured to grow without loading entire tables into the browser. Million-user scale still requires production load testing, observability, CDN/storage tuning, rate limiting and database capacity planning before launch.
 
 No software can honestly guarantee zero glitches for every device or traffic pattern, so production monitoring and iterative testing remain part of the launch process.
 
