@@ -36,11 +36,13 @@ const fmtDate = value => value ? new Date(value).toLocaleDateString(undefined,{m
 
 function logoMark(size='md') {
   return `<span class="rp-mark rp-${size}" aria-label="ReelPage"><svg viewBox="0 0 64 64" aria-hidden="true">
-    <circle cx="27" cy="25" r="17" fill="none" stroke="currentColor" stroke-width="5"/>
-    <circle cx="27" cy="25" r="5" fill="currentColor"/>
-    <circle cx="15" cy="16" r="3.2" fill="currentColor"/><circle cx="39" cy="16" r="3.2" fill="currentColor"/><circle cx="39" cy="34" r="3.2" fill="currentColor"/>
-    <path d="M12 25h-6v28h9V44h8c11 0 18-6 18-16 0-2-.3-3.8-1-5.5l-7 7c-.5 3-3.2 5.2-7 5.2h-11V25Z" fill="currentColor"/>
-    <path d="M6 25h8v10H6z" fill="currentColor" opacity=".75"/>
+    <defs><linearGradient id="rpBlue" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse"><stop stop-color="#45a3ff"/><stop offset="1" stop-color="#1687ff"/></linearGradient></defs>
+    <path d="M11 7h25c8.3 0 15 6.7 15 15v35H11V7Z" fill="url(#rpBlue)"/>
+    <path d="M18 14h17c4.4 0 8 3.6 8 8s-3.6 8-8 8H25v7h10c8.3 0 15-6.7 15-15S43.3 7 35 7H18v7Z" fill="#fff"/>
+    <path d="M25 30h-7v20h7V30Z" fill="#fff"/>
+    <circle cx="48" cy="18" r="10" fill="#07111d" stroke="#45a3ff" stroke-width="4"/>
+    <circle cx="48" cy="18" r="3" fill="#45a3ff"/>
+    <circle cx="42.5" cy="13.5" r="2" fill="#45a3ff"/><circle cx="53.5" cy="13.5" r="2" fill="#45a3ff"/><circle cx="53.5" cy="22.5" r="2" fill="#45a3ff"/>
   </svg></span>`;
 }
 function brand(compact=false){ return `<div class="brand-lockup">${logoMark(compact?'sm':'md')}<span>REEL<span>PAGE</span></span></div>`; }
@@ -221,7 +223,7 @@ function postCard(p){
 
 function modal(){
   const t=state.modal.type;
-  if(t==='auth')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal auth-modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="auth-tabs"><button class="${state.authMode==='signup'?'active':''}" onclick="state.authMode='signup';render()">Create account</button><button class="${state.authMode==='login'?'active':''}" onclick="state.authMode='login';render()">Sign in</button></div><div class="eyebrow">${state.authMode==='signup'?'JOIN THE NETWORK':'WELCOME BACK'}</div><h2>${state.authMode==='signup'?'Your creative identity starts here.':'Welcome back to ReelPage.'}</h2><p>Username and password only. No email address or email verification is used for your ReelPage login.</p>${state.authMode==='signup'?'<input id="authName" class="input" placeholder="Full name"><select id="authRole" class="input" aria-label="Professional role"><option value="" selected disabled>Select your professional role</option><option value="Writer">Writer</option><option value="Producer">Producer</option><option value="Director">Director</option><option value="Executive Producer">Executive Producer</option></select><input id="authLocation" class="input" placeholder="City / country" value="Nigeria">':''}<input id="authUsername" class="input" placeholder="Username" autocomplete="username"><input id="authPassword" class="input" type="password" placeholder="Password · 8+ characters" autocomplete="${state.authMode==='signup'?'new-password':'current-password'}"><button class="primary full" onclick="submitAuth()" ${state.loading?'disabled':''}>${state.loading?'Opening secure account…':state.authMode==='signup'?'Create my ReelPage →':'Sign in →'}</button><small class="modal-note">ReelPage uses Supabase Auth behind the scenes; the email is an internal account identifier, not collected from you.</small></div></div>`;
+  if(t==='auth')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal auth-modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="auth-tabs"><button class="${state.authMode==='signup'?'active':''}" onclick="state.authMode='signup';render()">Create account</button><button class="${state.authMode==='login'?'active':''}" onclick="state.authMode='login';render()">Sign in</button></div><div class="eyebrow">${state.authMode==='signup'?'JOIN THE NETWORK':'WELCOME BACK'}</div><h2>${state.authMode==='signup'?'Your creative identity starts here.':'Welcome back to ReelPage.'}</h2><p>Username and password only. No email address or email verification is used for your ReelPage login.</p>${state.authMode==='signup'?'<input id="authName" class="input" placeholder="Full name" autocomplete="name" oninput="updateUsernamePreview()"><div class="username-preview"><span>USERNAME</span><b id="usernamePreview">Your name will become your username</b></div><select id="authRole" class="input" aria-label="Professional role"><option value="" selected disabled>Select your professional role</option><option value="Writer">Writer</option><option value="Producer">Producer</option><option value="Director">Director</option><option value="Executive Producer">Executive Producer</option></select><label class="field-label" for="authDob">Date of birth</label><input id="authDob" class="input" type="date" autocomplete="bday" max="2026-09-28" min="1900-01-01"><small class="field-hint">Used for age eligibility and kept private on your public profile.</small><input id="authLocation" class="input" placeholder="City / country" value="Nigeria">':''}<input id="authUsername" class="input" placeholder="Username" autocomplete="username"><input id="authPassword" class="input" type="password" placeholder="Password · 8+ characters" autocomplete="${state.authMode==='signup'?'new-password':'current-password'}"><button class="primary full" onclick="submitAuth()" ${state.loading?'disabled':''}>${state.loading?'Opening secure account…':state.authMode==='signup'?'Create my ReelPage →':'Sign in →'}</button><small class="modal-note">ReelPage uses Supabase Auth behind the scenes; the email is an internal account identifier, not collected from you.</small></div></div>`;
   if(t==='person'){const p=state.selectedPerson; if(p){openPublicProfile(p.id); return '';} return '';}
   if(t==='profile')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">YOUR REELPAGE</div><h2>Edit your creative identity.</h2><p>Your profile is your professional calling card.</p><label class="photo-upload">${avatar(state.user,'edit-avatar')}<span>Change profile photo<input id="avatarInput" type="file" accept="image/*" hidden onchange="uploadProfileImage(this.files[0],'avatars','avatar_url')"></span></label><input id="editName" class="input" value="${esc(state.user.full_name||'')}" placeholder="Full name"><input id="editHeadline" class="input" value="${esc(state.user.headline||'')}" placeholder="Professional headline"><input id="editLocation" class="input" value="${esc(state.user.location||'Nigeria')}" placeholder="Location"><textarea id="editBio" class="input area" placeholder="About you">${esc(state.user.bio||'')}</textarea><input id="editSkills" class="input" value="${esc((state.user.skills||[]).join(', '))}" placeholder="Skills separated by commas"><button class="primary full" onclick="saveProfile()">Save profile →</button></div></div>`;
   if(t==='post')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="eyebrow">CREATIVE FEED</div><h2>What are you working on?</h2><p>Share an update, call for collaborators or a thought from your creative journey.</p><textarea id="postContent" class="input area" placeholder="Tell the network what is happening..."></textarea><label class="upload-label">${icon('film',16)} Add image<input id="postMedia" type="file" accept="image/*" hidden></label><button class="primary full" onclick="createPost()">Publish post →</button></div></div>`;
@@ -232,6 +234,14 @@ function modal(){
 function openCreate(type){ if(!state.user && type!=='profile'){openAuth('signup');return;} state.modal={type}; render(); }
 function openPerson(id){state.selectedPerson=state.profiles.find(p=>p.id===id);if(state.selectedPerson)state.modal={type:'person'};render();}
 function messagePerson(id){state.modal=null;state.selectedConversation=id;state.tab='Messages';loadMessages().then(render);}
+function makeUsername(name){
+  return String(name||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,24);
+}
+function updateUsernamePreview(){
+  const el=document.getElementById('usernamePreview');
+  const name=document.getElementById('authName')?.value||'';
+  if(el)el.textContent=makeUsername(name)||'Your name will become your username';
+}
 async function submitAuth(){
   const username=(document.getElementById('authUsername')?.value||'').trim().toLowerCase(), password=document.getElementById('authPassword')?.value||'';
   if(!/^[a-z0-9_]{3,24}$/.test(username))return showToast('Username must be 3–24 letters, numbers or underscores.');
@@ -241,9 +251,12 @@ async function submitAuth(){
   if(state.authMode==='signup'){
     payload.full_name=(document.getElementById('authName')?.value||'').trim();
     payload.role=(document.getElementById('authRole')?.value||'').trim();
+    payload.date_of_birth=(document.getElementById('authDob')?.value||'').trim();
     payload.location=(document.getElementById('authLocation')?.value||'Nigeria').trim()||'Nigeria';
     if(payload.full_name.length<2){state.loading=false;render();return showToast('Please enter your full name.');}
     if(!payload.role){state.loading=false;render();return showToast('Please select your professional role.');}
+    if(!payload.date_of_birth){state.loading=false;render();return showToast('Please select your date of birth.');}
+    payload.username=makeUsername(payload.full_name);
   }
   try{
     const res=await fetch(AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
