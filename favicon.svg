@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-<title id="title">ReelPage</title><desc id="desc">A film reel merged with the letter P in electric blue and black.</desc>
-<defs><linearGradient id="blue" x1="18" y1="15" x2="108" y2="113" gradientUnits="userSpaceOnUse"><stop stop-color="#45A3FF"/><stop offset=".48" stop-color="#1687FF"/><stop offset="1" stop-color="#12B9FF"/></linearGradient></defs>
-<path d="M22 14h49c22.1 0 40 17.9 40 40v1c0 22.1-17.9 40-40 40H58v24H22V14Z" fill="url(#blue)"/>
-<path d="M35 27h35c14.9 0 27 12.1 27 27.5S84.9 82 70 82H48v24H35V27Zm13 13v29h21c7.8 0 14-6.4 14-14.5S76.8 40 69 40H48Z" fill="#050505"/>
-<path d="M48 69h-13v37h13V69Z" fill="#050505"/>
-<circle cx="88" cy="40" r="25" fill="#050505"/>
-<circle cx="88" cy="40" r="5.5" fill="#1687FF"/>
-<circle cx="88" cy="20.5" r="5" fill="#1687FF"/><circle cx="104.9" cy="30.2" r="5" fill="#1687FF"/><circle cx="104.9" cy="49.8" r="5" fill="#1687FF"/><circle cx="88" cy="59.5" r="5" fill="#1687FF"/><circle cx="71.1" cy="49.8" r="5" fill="#1687FF"/><circle cx="71.1" cy="30.2" r="5" fill="#1687FF"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img"><title>ReelPage mark</title><defs><linearGradient id="b" x1="18" y1="14" x2="108" y2="114" gradientUnits="userSpaceOnUse"><stop stop-color="#35C4FF"/><stop offset=".55" stop-color="#1687FF"/><stop offset="1" stop-color="#1268E8"/></linearGradient></defs><path d="M22 14h48c22.6 0 41 18.4 41 41s-18.4 41-41 41H58v18c0 8-6.5 14-14 14H36c-7.7 0-14-6.3-14-14V14Z" fill="url(#b)"/><path d="M35 27h35c15 0 27 12.1 27 27s-12 27-27 27H48v25H35V27Zm13 13v28h21c7.8 0 14-6.2 14-14s-6.2-14-14-14H48Z" fill="#07111D"/><circle cx="88" cy="40" r="5.6" fill="#1687FF"/><circle cx="88" cy="20.5" r="5.2" fill="#07111D"/><circle cx="105" cy="30.2" r="5.2" fill="#07111D"/><circle cx="105" cy="49.8" r="5.2" fill="#07111D"/><circle cx="88" cy="59.5" r="5.2" fill="#07111D"/><circle cx="71" cy="49.8" r="5.2" fill="#07111D"/><circle cx="71" cy="30.2" r="5.2" fill="#07111D"/><rect x="35" y="70" width="13" height="13" rx="3" fill="#07111D"/><rect x="35" y="89" width="13" height="13" rx="3" fill="#07111D"/><rect x="35" y="108" width="13" height="13" rx="3" fill="#07111D"/></svg>
