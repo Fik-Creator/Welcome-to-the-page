@@ -89,3 +89,24 @@ select.input{appearance:auto;padding-right:34px;cursor:pointer}.input:focus,sele
 .brand-lockup .rp-mark{filter:drop-shadow(0 7px 16px rgba(22,135,255,.22))}
 .hero-tile .rp-mark{filter:drop-shadow(0 12px 26px rgba(22,135,255,.3))}
 .toast .rp-mark{filter:none}
+
+
+/* Final ReelPage brand system */
+.rp-wordmark{display:block;width:172px;height:auto;object-fit:contain}
+.brand-lockup{display:flex;align-items:center;min-width:0}
+.brand-lockup .rp-mark{filter:drop-shadow(0 7px 18px rgba(22,135,255,.22))}
+.person-card{text-align:center;padding:22px 18px 18px}
+.person-card .avatar.xl{width:104px;height:104px;margin:0 auto 16px}
+.person-card h3{font-size:16px;letter-spacing:-.2px}
+.person-card p{font-size:11px;line-height:1.45}
+.person-card>small{display:block;margin-top:4px}
+.person-card .tag-row{justify-content:center}
+.person-card .connect-btn{margin-top:2px}
+.people-grid .person-card .verified{top:18px;right:18px}
+.avatar.xl{width:104px;height:104px}
+.avatar.large{width:112px;height:112px}
+.nav-item.active{background:#08213a;box-shadow:inset 3px 0 var(--gold)}
+.nav-item.active .icon{color:#45a3ff}
+.mobile-logo .rp-wordmark{width:132px}
+@media(max-width:1100px){.sidebar-brand{justify-content:center}.sidebar .rp-wordmark{display:none}.sidebar-brand .rp-mark{display:inline-grid}}
+@media(max-width:720px){.mobile-logo .rp-wordmark{width:126px}.person-card .avatar.xl{width:96px;height:96px}}
