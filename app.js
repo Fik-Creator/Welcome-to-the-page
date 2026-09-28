@@ -277,6 +277,10 @@ async function submitAuth(){
     if(!res.ok)throw new Error(data.error||'Authentication failed.');
     if(!data.session)throw new Error('No session was returned. Please try again.');
     await sb.auth.setSession(data.session);
+    if(state.authMode==='signup'){
+      const profileUpdate=await sb.from('profiles').update({country:payload.country,location:payload.location}).eq('id',data.user.id);
+      if(profileUpdate.error)throw new Error(profileUpdate.error.message);
+    }
     await loadUser(); state.loading=false; state.modal=null; await hydrate(); showToast(state.authMode==='signup'?'Welcome to ReelPage. Your profile is live.':'Welcome back to ReelPage.');
   }catch(e){state.loading=false;render();showToast(e.message||'Authentication failed.');}
 }
