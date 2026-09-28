@@ -27,7 +27,7 @@ const DEMO = {
 const state = {
   tab:'Home', search:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
   opps:DEMO.opps.slice(), posts:[], liked:new Set(), following:new Set(), messages:[],
-  selectedPerson:null, selectedConversation:null, modal:null, authMode:'signup', loading:false, toast:''
+  selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null, modal:null, authMode:'signup', loading:false, toast:''
 };
 
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -36,9 +36,11 @@ const fmtDate = value => value ? new Date(value).toLocaleDateString(undefined,{m
 
 function logoMark(size='md') {
   return `<span class="rp-mark rp-${size}" aria-label="ReelPage"><svg viewBox="0 0 64 64" aria-hidden="true">
-    <rect x="4" y="4" width="56" height="56" rx="16" fill="none" stroke="currentColor" stroke-width="4"/>
-    <path d="M18 45V19h15.5c7.1 0 11.5 3.5 11.5 9.1 0 4-2.2 7-6.4 8.3L46.8 45h-7.2l-7.1-7.8H24V45h-6Zm6-13.4h8.6c3.6 0 5.9-1.4 5.9-3.8 0-2.3-2.3-3.6-5.9-3.6H24v7.4Z" fill="currentColor"/>
-    <circle cx="48" cy="17" r="3" fill="currentColor"/><circle cx="54" cy="23" r="3" fill="currentColor"/>
+    <circle cx="27" cy="25" r="17" fill="none" stroke="currentColor" stroke-width="5"/>
+    <circle cx="27" cy="25" r="5" fill="currentColor"/>
+    <circle cx="15" cy="16" r="3.2" fill="currentColor"/><circle cx="39" cy="16" r="3.2" fill="currentColor"/><circle cx="39" cy="34" r="3.2" fill="currentColor"/>
+    <path d="M12 25h-6v28h9V44h8c11 0 18-6 18-16 0-2-.3-3.8-1-5.5l-7 7c-.5 3-3.2 5.2-7 5.2h-11V25Z" fill="currentColor"/>
+    <path d="M6 25h8v10H6z" fill="currentColor" opacity=".75"/>
   </svg></span>`;
 }
 function brand(compact=false){ return `<div class="brand-lockup">${logoMark(compact?'sm':'md')}<span>REEL<span>PAGE</span></span></div>`; }
@@ -69,7 +71,9 @@ function avatar(user,cls=''){
     : `<div class="avatar ${cls}">${logoMark('xs')}<span>${esc(initials(name))}</span></div>`;
 }
 
-function setTab(tab){ state.tab=tab; state.selectedPerson=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setTab(tab){ state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function openPublicProfile(id){ state.viewedProfileId=id; state.profileViewTab='About'; state.tab='ProfileView'; state.selectedPerson=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setProfileViewTab(tab){ state.profileViewTab=tab; render(); }
 function showToast(message){ state.toast=message; render(); clearTimeout(window.__rpToast); window.__rpToast=setTimeout(()=>{state.toast='';render()},2800); }
 function openAuth(mode='signup'){ state.authMode=mode; state.modal={type:'auth'}; render(); }
 function closeModal(){ state.modal=null; render(); }
@@ -104,6 +108,7 @@ function page(){
     case 'Opportunities':return opportunitiesPage();
     case 'Messages':return messagesPage();
     case 'Profile':return profilePage();
+    case 'ProfileView':return publicProfilePage();
     default:return homePage();
   }
 }
@@ -159,9 +164,45 @@ function profilePage(){
   <aside class="profile-aside"><section class="surface"><div class="eyebrow">PROFILE CHECKLIST</div><h3>Make your work discoverable</h3>${checkItem(!!u.avatar_url,'Profile photo','Upload a clear headshot.')}${checkItem(!!u.headline,'Headline','Tell people what you do.')}${checkItem(!!u.bio,'About','Give your story context.')}${checkItem((u.skills||[]).length>0,'Skills','Add the craft people can hire you for.')}</section><section class="surface brand-card">${logoMark('sm')}<b>One identity. Many creative possibilities.</b><small>ReelPage connects people, projects and opportunities.</small></section></aside></div>`;
 }
 
+function publicProfilePage(){
+  const p=state.profiles.find(x=>String(x.id)===String(state.viewedProfileId));
+  if(!p) return '<div class="empty-state big">'+logoMark('lg')+'<div class="eyebrow">PROFILE</div><h1>Creative not found.</h1><p>This profile may no longer be available.</p><button class="primary" onclick="setTab(\'Discover\')">Back to Discover</button></div>';
+  const mine=state.projects.filter(x=>String(x.owner_id)===String(p.id));
+  const isSelf=state.user&&String(state.user.id)===String(p.id);
+  const tab=state.profileViewTab||'About';
+  const publicPosts=state.posts.filter(x=>String(x.author?.id)===String(p.id));
+  const followLabel=state.following.has(p.id)?'Following':'Follow';
+  const content=tab==='Portfolio'
+    ? `<div class="public-grid">${mine.length?mine.map(projectCard).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>No projects published yet.</b><small>This creative has not added public projects.</small></div></div>'}</div>`
+    : tab==='Projects'
+    ? `<div class="public-project-list">${mine.length?mine.map(projectRow).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>No projects yet.</b><small>Projects will appear here when published.</small></div></div>'}</div>`
+    : tab==='Skills'
+    ? `<div class="skills-panel"><div class="tag-row big">${(p.skills||[]).map(s=>'<span>'+esc(s)+'</span>').join('')||'<span>Skills not added yet</span>'}</div><div class="surface mini-surface"><div class="eyebrow">CREATIVE FOCUS</div><h3>${esc(p.headline||'Creative professional')}</h3><p>${esc(p.bio||'This creative has not added a public biography yet.')}</p></div></div>`
+    : `<div class="public-about-grid"><section class="surface"><div class="eyebrow">ABOUT</div><h2>Professional story</h2><p class="bio-text">${esc(p.bio||'This creative has not added a public biography yet.')}</p><div class="tag-row big">${(p.skills||[]).map(s=>'<span>'+esc(s)+'</span>').join('')}</div></section><section class="surface"><div class="eyebrow">RECENT ACTIVITY</div><h2>Creative feed</h2>${publicPosts.length?publicPosts.slice(0,3).map(postCard).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>No public posts yet.</b><small>Updates will appear here when they publish.</small></div></div>'}</section></div>`;
+  return `<div class="profile-public-page">
+    <button class="back-link" onclick="setTab('Discover')">${icon('arrow',15)} Back to Discover</button>
+    <section class="public-profile-hero">
+      <div class="public-cover ${p.cover_url?'has-image':''}" ${p.cover_url?`style="background-image:url('${esc(p.cover_url)}')"`:''}></div>
+      <div class="public-identity">
+        <div class="public-avatar-wrap">${avatar(p,'public-avatar')}</div>
+        <div class="public-identity-main">
+          <div class="eyebrow">${p.is_verified?'VERIFIED CREATIVE · ':''}@${esc(p.username||'creative')}</div>
+          <h1>${esc(p.full_name||'ReelPage member')}</h1>
+          <p>${esc(p.headline||'Creative professional')} · ${esc(p.location||'Nigeria')}</p>
+          <div class="stats"><span><b>${mine.length}</b> projects</span><span><b>${p.connections_count||0}</b> connections</span><span><b>${p.followers_count||0}</b> followers</span></div>
+        </div>
+        <div class="public-actions">
+          ${isSelf?'<button class="secondary" onclick="setTab(\'Profile\')">Edit profile</button>':`<button class="primary" onclick="connectTo('${esc(p.id)}')">Connect</button><button class="secondary" onclick="followTo('${esc(p.id)}')">${followLabel}</button><button class="secondary" onclick="messagePerson('${esc(p.id)}')">Message</button>`}
+        </div>
+      </div>
+      <div class="profile-tabs">${['About','Portfolio','Projects','Skills'].map(x=>`<button class="${tab===x?'active':''}" onclick="setProfileViewTab('${x}')">${x}</button>`).join('')}</div>
+    </section>
+    ${content}
+  </div>`;
+}
 function checkItem(done,title,desc){return `<div class="check-item"><span class="${done?'done':''}">${done?'✓':'○'}</span><div><b>${title}</b><small>${desc}</small></div></div>`;}
 function profileCard(p){
-  return `<article class="person-card" onclick="openPerson('${esc(p.id)}')">${avatar(p,'xl')}<div class="verified">${p.is_verified?'✓':''}</div><h3>${esc(p.full_name||p.name)}</h3><p>${esc(p.headline||p.role||'Creative')}</p><small>${esc(p.location||'Nigeria')}</small><div class="tag-row small-tags">${(p.skills||[]).slice(0,2).map(s=>`<span>${esc(s)}</span>`).join('')}</div><button class="connect-btn" onclick="event.stopPropagation();followTo('${esc(p.id)}')">${state.following.has(p.id)?'Following':'Follow'}</button></article>`;
+  return `<article class="person-card" onclick="openPublicProfile('${esc(p.id)}')">${avatar(p,'xl')}<div class="verified">${p.is_verified?'✓':''}</div><h3>${esc(p.full_name||p.name)}</h3><p>${esc(p.headline||p.role||'Creative')}</p><small>${esc(p.location||'Nigeria')}</small><div class="tag-row small-tags">${(p.skills||[]).slice(0,2).map(s=>`<span>${esc(s)}</span>`).join('')}</div><button class="connect-btn" onclick="event.stopPropagation();followTo('${esc(p.id)}')">${state.following.has(p.id)?'Following':'Follow'}</button></article>`;
 }
 function projectCard(p){
   return `<article class="project-card"><div class="project-poster">${logoMark('sm')}<span>${esc(p.format||'Creative Project')}</span><strong>${esc(p.title)}</strong><small>${esc(p.genre||'')}</small></div><div class="project-info"><span class="tiny">${esc(p.status||'In Development')}</span><h3>${esc(p.title)}</h3><p>${esc(p.description||p.logline||'')}</p><div class="project-foot"><span>${esc(p.owner_id===state.user?.id?'Your project':'Creative project')}</span><button class="text-btn" onclick="showToast('Project details are ready for the next ReelPage release.')">View ${icon('arrow',13)}</button></div></div></article>`;
@@ -181,7 +222,7 @@ function postCard(p){
 function modal(){
   const t=state.modal.type;
   if(t==='auth')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal auth-modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="auth-tabs"><button class="${state.authMode==='signup'?'active':''}" onclick="state.authMode='signup';render()">Create account</button><button class="${state.authMode==='login'?'active':''}" onclick="state.authMode='login';render()">Sign in</button></div><div class="eyebrow">${state.authMode==='signup'?'JOIN THE NETWORK':'WELCOME BACK'}</div><h2>${state.authMode==='signup'?'Your creative identity starts here.':'Welcome back to ReelPage.'}</h2><p>Username and password only. No email address or email verification is used for your ReelPage login.</p>${state.authMode==='signup'?'<input id="authName" class="input" placeholder="Full name"><input id="authRole" class="input" placeholder="Professional role · Actor, Writer, Producer..."><input id="authLocation" class="input" placeholder="City / country" value="Nigeria">':''}<input id="authUsername" class="input" placeholder="Username" autocomplete="username"><input id="authPassword" class="input" type="password" placeholder="Password · 8+ characters" autocomplete="${state.authMode==='signup'?'new-password':'current-password'}"><button class="primary full" onclick="submitAuth()" ${state.loading?'disabled':''}>${state.loading?'Opening secure account…':state.authMode==='signup'?'Create my ReelPage →':'Sign in →'}</button><small class="modal-note">ReelPage uses Supabase Auth behind the scenes; the email is an internal account identifier, not collected from you.</small></div></div>`;
-  if(t==='person'){const p=state.selectedPerson;return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="person-top">${avatar(p,'large')}<div><div class="eyebrow">${esc(p.headline||'CREATIVE').toUpperCase()}</div><h2>${esc(p.full_name)}</h2><p>${esc(p.location||'Nigeria')}</p></div></div><p class="bio-text">${esc(p.bio||'Creative professional building work on ReelPage.')}</p><div class="tag-row big">${(p.skills||[]).map(s=>`<span>${esc(s)}</span>`).join('')}</div><div class="modal-actions"><button class="primary" onclick="messagePerson('${esc(p.id)}')">Message</button><button class="secondary" onclick="connectTo('${esc(p.id)}')">Connect</button><button class="secondary" onclick="followTo('${esc(p.id)}')">${state.following.has(p.id)?'Following':'Follow'}</button></div></div></div>`;}
+  if(t==='person'){const p=state.selectedPerson; if(p){openPublicProfile(p.id); return '';} return '';}
   if(t==='profile')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">YOUR REELPAGE</div><h2>Edit your creative identity.</h2><p>Your profile is your professional calling card.</p><label class="photo-upload">${avatar(state.user,'edit-avatar')}<span>Change profile photo<input id="avatarInput" type="file" accept="image/*" hidden onchange="uploadProfileImage(this.files[0],'avatars','avatar_url')"></span></label><input id="editName" class="input" value="${esc(state.user.full_name||'')}" placeholder="Full name"><input id="editHeadline" class="input" value="${esc(state.user.headline||'')}" placeholder="Professional headline"><input id="editLocation" class="input" value="${esc(state.user.location||'Nigeria')}" placeholder="Location"><textarea id="editBio" class="input area" placeholder="About you">${esc(state.user.bio||'')}</textarea><input id="editSkills" class="input" value="${esc((state.user.skills||[]).join(', '))}" placeholder="Skills separated by commas"><button class="primary full" onclick="saveProfile()">Save profile →</button></div></div>`;
   if(t==='post')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="eyebrow">CREATIVE FEED</div><h2>What are you working on?</h2><p>Share an update, call for collaborators or a thought from your creative journey.</p><textarea id="postContent" class="input area" placeholder="Tell the network what is happening..."></textarea><label class="upload-label">${icon('film',16)} Add image<input id="postMedia" type="file" accept="image/*" hidden></label><button class="primary full" onclick="createPost()">Publish post →</button></div></div>`;
   if(t==='project')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">NEW PROJECT</div><h2>Put your work in motion.</h2><input id="createTitle" class="input" placeholder="Project title"><input id="createMeta" class="input" placeholder="Format · Genre e.g. Short Film · Drama"><textarea id="createDesc" class="input area" placeholder="Logline or project description"></textarea><button class="primary full" onclick="createProject()">Create project →</button></div></div>`;
@@ -331,7 +372,7 @@ async function boot(){
 }
 window.addEventListener('error',e=>console.warn('ReelPage UI error',e.error||e.message));
 window.setTab=setTab;window.openAuth=openAuth;window.openCreate=openCreate;window.closeModal=closeModal;window.submitAuth=submitAuth;
-window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
+window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
 window.saveProfile=saveProfile;window.uploadProfileImage=uploadProfileImage;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
 
 render();
