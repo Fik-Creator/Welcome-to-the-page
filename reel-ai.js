@@ -423,6 +423,13 @@
     }catch(e){if(e?.name!=='AbortError')toast('Sharing was cancelled or unavailable.');}
   }
 
+  window.messageScriptSeller=async function(sellerId,prefill){
+    if(!window.state?.user){window.openAuth?.('login');return;}
+    if(String(sellerId)===String(window.state.user.id)){toast('That is your own script listing.');return;}
+    const person=await findPerson(String(sellerId));
+    if(!person){answer('I could not load the script writer profile.');return;}
+    await openMessage(person,prefill||'I found your script on ReelPage and would like to discuss it.');
+  };
   window.openComments=openComments;window.sharePost=sharePost;
   window.reelAiCommand=runCommand;
   window.openReelAI=()=>{mount();setPanel(true);};
