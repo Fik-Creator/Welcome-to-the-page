@@ -33,7 +33,9 @@ const DEMO_SCRIPTS = [
 const state = {
   tab:'Home', search:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
   opps:DEMO.opps.slice(), scripts:[], posts:[], liked:new Set(), following:new Set(), messages:[],
-  selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null,premium:false, modal:null, authMode:'signup', loading:false, toast:''
+  selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null,
+  network:{followers:[],following:[],connections:[],incoming:[],outgoing:[]}, networkTab:'connections', networkProfileId:null, networkLoading:false,
+  premium:false, modal:null, authMode:'signup', loading:false, toast:'', authStatus:'', busyAction:null
 };
 
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -90,7 +92,7 @@ function openAuth(mode='signup'){ state.authMode=mode; state.modal={type:'auth'}
 function closeModal(){ state.modal=null; render(); }
 
 function shell(){
-  const nav=[['Home','home'],['Discover','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Profile','profile']];
+  const nav=[['Home','home'],['Discover','discover'],['Connect','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Profile','profile']];
   return `<div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-brand">${brand()}</div>
@@ -118,6 +120,7 @@ function page(){
     case 'Projects':return projectsPage();
     case 'Scripts':return scriptsPage();
     case 'Messages':return messagesPage();
+    case 'Connect':return connectPage();
     case 'Profile':return profilePage();
     case 'ProfileView':return publicProfilePage();
     default:return homePage();
@@ -183,11 +186,75 @@ function messagesPage(){
   return `<div class="page-title"><div><div class="eyebrow">MESSAGES</div><h1>Make the connection count.</h1><p>Private project conversations belong here.</p></div></div><div class="message-layout"><div class="conversation-list">${rows||'<div class="empty-state">No other creatives yet.</div>'}</div><div class="chat"><div class="chat-head">${selected?avatar(selected,'sm'):'<span></span>'}<div><b>${esc(selected?.full_name||'Select a creative')}</b><small>${esc(selected?.headline||'')}</small></div></div><div class="chat-body">${msgs.length?msgs.map(m=>`<div class="bubble ${m.sender_id===state.user.id?'mine':''}">${esc(m.body)}<small>${fmtDate(m.created_at)}</small></div>`).join(''):'<div class="empty-state"><p>Start a professional conversation.</p></div>'}</div>${selected?'<form class="chat-form" onsubmit="sendMessage(event)"><input id="messageBody" placeholder="Write a message..."><button class="primary" type="submit">'+icon('send',16)+'</button></form>':''}</div></div>`;
 }
 
+
+function openNetwork(tab='connections',profileId=null){
+  state.networkTab=tab;
+  state.networkProfileId=profileId||state.user?.id||null;
+  state.tab='Connect';
+  loadNetwork(state.networkProfileId);
+}
+async function fetchProfilesByIds(ids){
+  const cleanIds=[...new Set((ids||[]).filter(Boolean).map(String))];
+  if(!cleanIds.length)return [];
+  const r=await sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').in('id',cleanIds);
+  return r.data||[];
+}
+async function loadNetwork(targetId=state.user?.id){
+  if(!targetId)return;
+  state.networkLoading=true; render();
+  try{
+    const [followersR,followingR,connectionsR]=await Promise.all([
+      sb.from('follows').select('follower_id,following_id,created_at').eq('following_id',targetId).order('created_at',{ascending:false}).limit(200),
+      sb.from('follows').select('follower_id,following_id,created_at').eq('follower_id',targetId).order('created_at',{ascending:false}).limit(200),
+      sb.from('connections').select('requester_id,addressee_id,status,created_at,updated_at').or('requester_id.eq.'+targetId+',addressee_id.eq.'+targetId).order('created_at',{ascending:false}).limit(300)
+    ]);
+    const followers=followersR.data||[], following=followingR.data||[], allConnections=connectionsR.data||[];
+    const accepted=allConnections.filter(x=>x.status==='accepted');
+    const currentUserId=state.user?.id;
+    const incoming=allConnections.filter(x=>x.status==='pending'&&String(x.addressee_id)===String(currentUserId));
+    const outgoing=allConnections.filter(x=>x.status==='pending'&&String(x.requester_id)===String(currentUserId));
+    const ids=[...followers.map(x=>x.follower_id),...following.map(x=>x.following_id),...accepted.flatMap(x=>[x.requester_id,x.addressee_id]),...incoming.map(x=>x.requester_id),...outgoing.map(x=>x.addressee_id)];
+    const profiles=await fetchProfilesByIds(ids);
+    const byId=new Map(profiles.map(p=>[String(p.id),p]));
+    state.network={
+      followers:followers.map(x=>byId.get(String(x.follower_id))).filter(Boolean),
+      following:following.map(x=>byId.get(String(x.following_id))).filter(Boolean),
+      connections:accepted.map(x=>byId.get(String(String(x.requester_id)===String(targetId)?x.addressee_id:x.requester_id))).filter(Boolean),
+      incoming:incoming.map(x=>({connection:x,profile:byId.get(String(x.requester_id))})).filter(x=>x.profile),
+      outgoing:outgoing.map(x=>({connection:x,profile:byId.get(String(x.addressee_id))})).filter(x=>x.profile)
+    };
+  }catch(e){console.warn('ReelPage network error',e);showToast('Could not load your network right now.');}
+  finally{state.networkLoading=false;render();}
+}
+function networkPersonRow(p){
+  if(!p)return '';
+  return '<button class="network-person" onclick="openPublicProfile(\''+esc(p.id)+'\')">'+avatar(p,'sm')+'<span><b>'+esc(p.full_name||'ReelPage member')+'</b><small>'+esc(p.headline||p.role||'Creative')+' · '+esc(profilePlace(p))+'</small></span><span class="network-arrow">'+icon('arrow',15)+'</span></button>';
+}
+async function respondToConnection(requesterId,status){
+  if(!state.user)return openAuth('login');
+  const r=await sb.from('connections').update({status}).eq('requester_id',requesterId).eq('addressee_id',state.user.id);
+  if(r.error)return showToast(r.error.message);
+  showToast(status==='accepted'?'Connection accepted.':'Connection request declined.');
+  await loadNetwork(state.user.id);
+  await hydrate();
+}
+function connectPage(){
+  if(!state.user)return '<div class="empty-state big">'+logoMark('lg')+'<div class="eyebrow">CONNECT</div><h1>Build your creative network.</h1><p>Find followers, followings, connections and incoming requests in one place.</p><button class="primary" onclick="openAuth(\'login\')">Sign in to Connect</button></div>';
+  const n=state.network||{followers:[],following:[],connections:[],incoming:[],outgoing:[]};
+  const tab=state.networkTab||'connections';
+  const list=tab==='followers'?n.followers:tab==='following'?n.following:n.connections;
+  const incoming=n.incoming.length?n.incoming.map(x=>'<div class="request-row">'+networkPersonRow(x.profile)+'<div class="request-actions"><button class="primary small" onclick="event.stopPropagation();respondToConnection(\''+esc(x.connection.requester_id)+'\',\'accepted\')">Accept</button><button class="secondary small" onclick="event.stopPropagation();respondToConnection(\''+esc(x.connection.requester_id)+'\',\'declined\')">Decline</button></div></div>').join(''):'<div class="empty-inline"><div><b>No pending requests.</b><small>New connection requests will appear here.</small></div></div>';
+  const outgoing=n.outgoing.length?n.outgoing.map(x=>networkPersonRow(x.profile)).join(''):'<div class="empty-inline"><div><b>No outgoing requests.</b><small>Connect with people from Discover.</small></div></div>';
+  return '<div class="page-title"><div><div class="eyebrow">CONNECT</div><h1>Your creative network.</h1><p>Connect like LinkedIn: follow people, accept collaborators and keep your professional circle visible.</p></div><button class="primary" onclick="setTab(\'Discover\')">Discover creatives '+icon('arrow',15)+'</button></div>'+
+    '<div class="network-summary"><button class="'+(tab==='connections'?'active':'')+'" onclick="state.networkTab=\'connections\';render()"><b>'+n.connections.length+'</b><span>Connections</span></button><button class="'+(tab==='followers'?'active':'')+'" onclick="state.networkTab=\'followers\';render()"><b>'+n.followers.length+'</b><span>Followers</span></button><button class="'+(tab==='following'?'active':'')+'" onclick="state.networkTab=\'following\';render()"><b>'+n.following.length+'</b><span>Following</span></button></div>'+
+    '<div class="network-layout"><section class="surface"><div class="section-head compact"><div><div class="eyebrow">'+tab.toUpperCase()+'</div><h2>'+(tab==='connections'?'People you are connected with':tab==='followers'?'People following you':'People you follow')+'</h2></div></div><div class="network-list">'+(list.length?list.map(networkPersonRow).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>No people here yet.</b><small>Use Discover to grow your creative network.</small></div></div>')+'</div></section>'+
+    '<aside class="network-side"><section class="surface"><div class="eyebrow">CONNECTION REQUESTS</div><h3>Incoming</h3>'+incoming+'</section><section class="surface"><div class="eyebrow">SENT</div><h3>Outgoing requests</h3>'+outgoing+'</section></aside></div>';
+}
 function profilePage(){
   if(!state.user)return `<div class="profile-prompt">${logoMark('lg')}<div class="eyebrow">YOUR CREATIVE IDENTITY</div><h1>Claim your ReelPage.</h1><p>Build a professional home for your headshot, skills, projects and opportunities.</p><button class="primary" onclick="openAuth('signup')">Create profile ${icon('arrow',16)}</button></div>`;
   const u=state.user, mine=state.projects.filter(p=>p.owner_id===u.id);
   return `<div class="profile-hero"><div class="cover ${u.cover_url?'has-image':''}" ${u.cover_url?`style="background-image:url('${esc(u.cover_url)}')"`:''}><button class="cover-btn" onclick="document.getElementById('coverInput').click()">${icon('plus',14)} Cover photo</button><input id="coverInput" hidden type="file" accept="image/*" onchange="uploadProfileImage(this.files[0],'covers','cover_url')"></div><div class="identity-row">${avatar(u,'profile-avatar')}<div class="identity-main"><div class="eyebrow">@${esc(u.username||'creative')}</div><h1>${esc(u.full_name||'ReelPage member')}</h1><p>${esc(u.headline||'Creative professional')} · ${esc(profilePlace(u))}</p><div class="stats"><span><b>${mine.length}</b> projects</span><span><b>${u.connections_count||0}</b> connections</span><span><b>${u.followers_count||0}</b> followers</span></div></div><div class="profile-actions"><button class="secondary" onclick="openCreate('profile')">Edit profile</button><button class="premium-btn" onclick="openPremium()">✦ ${state.premium?'ReelPage Pro':'Go Pro · ₦5,000/month'}</button></div></div></div>
-  <div class="profile-layout"><div class="profile-main"><section class="surface"><div class="section-head compact"><div><div class="eyebrow">ABOUT</div><h2>Professional story</h2></div></div><p class="bio-text">${esc(u.bio||'Tell the industry what you make, what you care about and what you want to create next.')}</p><div class="tag-row">${(u.skills||[]).map(s=>`<span>${esc(s)}</span>`).join('')}</div></section><section class="surface"><div class="section-head compact"><div><div class="eyebrow">WORK</div><h2>Featured projects</h2></div><button class="text-btn" onclick="openCreate('project')">${icon('plus',14)} Add</button></div>${mine.length?mine.map(projectRow).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>Your body of work starts here.</b><small>Add a film, script or project.</small></div></div>'}</section></div>
+  <div class="profile-layout"><div class="profile-main"><section class="surface"><div class="section-head compact"><div><div class="eyebrow">ABOUT</div><h2>Professional story</h2></div><button class="text-btn" onclick="openCreate('profile')">Edit About ${icon('arrow',13)}</button></div><p class="bio-text">${esc(u.bio||'Tell the industry what you make, what you care about and what you want to create next.')}</p><div class="tag-row">${(u.skills||[]).map(s=>`<span>${esc(s)}</span>`).join('')}</div></section><section class="surface"><div class="section-head compact"><div><div class="eyebrow">WORK</div><h2>Featured projects</h2></div><button class="text-btn" onclick="openCreate('project')">${icon('plus',14)} Add</button></div>${mine.length?mine.map(projectRow).join(''):'<div class="empty-inline">'+logoMark('sm')+'<div><b>Your body of work starts here.</b><small>Add a film, script or project.</small></div></div>'}</section></div>
   <aside class="profile-aside"><section class="surface"><div class="eyebrow">PROFILE CHECKLIST</div><h3>Make your work discoverable</h3>${checkItem(!!u.avatar_url,'Profile photo','Upload a clear headshot.')}${checkItem(!!u.headline,'Headline','Tell people what you do.')}${checkItem(!!u.bio,'About','Give your story context.')}${checkItem((u.skills||[]).length>0,'Skills','Add the craft people can hire you for.')}</section><section class="surface brand-card">${logoMark('sm')}<b>One identity. Many creative possibilities.</b><small>ReelPage connects people, projects and opportunities.</small></section></aside></div>`;
 }
 
@@ -216,7 +283,7 @@ function publicProfilePage(){
           <div class="eyebrow">${p.is_verified?'VERIFIED CREATIVE · ':''}@${esc(p.username||'creative')}</div>
           <h1>${esc(p.full_name||'ReelPage member')}</h1>
           <p>${esc(p.headline||'Creative professional')} · ${esc(profilePlace(p))}</p>
-          <div class="stats"><span><b>${mine.length}</b> projects</span><span><b>${p.connections_count||0}</b> connections</span><span><b>${p.followers_count||0}</b> followers</span></div>
+          <div class="stats"><span><b>${mine.length}</b> projects</span><button type="button" onclick="openNetwork('connections','${esc(p.id)}')"><b>${p.connections_count||0}</b> connections</button><button type="button" onclick="openNetwork('followers','${esc(p.id)}')"><b>${p.followers_count||0}</b> followers</button></div>
         </div>
         <div class="public-actions">
           ${isSelf?'<button class="secondary" onclick="setTab(\'Profile\')">Edit profile</button>':`<button class="primary" onclick="connectTo('${esc(p.id)}')">Connect</button><button class="secondary" onclick="followTo('${esc(p.id)}')">${followLabel}</button><button class="secondary" onclick="messagePerson('${esc(p.id)}')">Message</button>`}
@@ -278,7 +345,7 @@ function modal(){
       ? '<input id="authName" class="input" placeholder="Full name" autocomplete="name" oninput="updateUsernamePreview()"><div class="username-preview"><span>USERNAME</span><b id="usernamePreview">Your name will become your username</b></div><select id="authRole" class="input" aria-label="Professional role"><option value="" selected disabled>Select your professional role</option><option value="Actor">Actor</option><option value="Writer">Writer</option><option value="Director">Director</option><option value="Producer">Producer</option><option value="Executive Producer">Executive Producer</option><option value="Cinematographer / DOP">Cinematographer / DOP</option><option value="Editor">Editor</option><option value="Production Designer">Production Designer</option><option value="Sound Designer">Sound Designer</option><option value="Composer">Composer</option><option value="Casting Director">Casting Director</option><option value="Script Supervisor">Script Supervisor</option><option value="Colorist">Colorist</option><option value="VFX Artist">VFX Artist</option><option value="Animator">Animator</option><option value="Makeup Artist">Makeup Artist</option><option value="Costume Designer">Costume Designer</option><option value="Gaffer">Gaffer</option><option value="Grip">Grip</option><option value="1st Assistant Director">1st Assistant Director</option><option value="Film Critic">Film Critic</option><option value="Distributor">Distributor</option><option value="Studio / Creative Business">Studio / Creative Business</option><option value="Other Creative">Other Creative</option></select><label class="field-label" for="authDob">Date of birth</label><input id="authDob" class="input" type="date" autocomplete="bday" max="2010-09-28" min="1900-01-01"><small class="field-hint">Used for age eligibility and kept private on your public profile.</small><label class="field-label" for="authCountry">Country</label><select id="authCountry" class="input" autocomplete="country">'+countryOptions('NG')+'</select><label class="field-label" for="authLocation">City / region</label><input id="authLocation" class="input" placeholder="City, state or region" autocomplete="address-level2">'
       : '';
     const loginFields=state.authMode==='login'?'<input id="authUsername" class="input" placeholder="Username" autocomplete="username">':'';
-    return '<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal auth-modal"><button class="modal-close" onclick="closeModal()">'+icon('close',19)+'</button><div class="auth-logo">'+brand()+'</div><div class="auth-tabs"><button class="'+(state.authMode==='signup'?'active':'')+'" onclick="state.authMode=\'signup\';render()">Create account</button><button class="'+(state.authMode==='login'?'active':'')+'" onclick="state.authMode=\'login\';render()">Sign in</button></div><div class="eyebrow">'+(state.authMode==='signup'?'JOIN THE NETWORK':'WELCOME BACK')+'</div><h2>'+ (state.authMode==='signup'?'Your creative identity starts here.':'Welcome back to ReelPage.')+'</h2><p>Username and password only. No email address or email verification is used for your ReelPage login.</p>'+signupFields+loginFields+'<input id="authPassword" class="input" type="password" placeholder="Password · 8+ characters" autocomplete="'+(state.authMode==='signup'?'new-password':'current-password')+'"><button class="primary full" onclick="submitAuth()" '+(state.loading?'disabled':'')+'>'+(state.loading?'Opening secure account…':state.authMode==='signup'?'Create my ReelPage →':'Sign in →')+'</button><small class="modal-note">ReelPage uses Supabase Auth behind the scenes; the email is an internal account identifier, not collected from you.</small></div></div>';
+    return '<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal auth-modal"><button class="modal-close" onclick="closeModal()">'+icon('close',19)+'</button><div class="auth-logo">'+brand()+'</div><div class="auth-tabs"><button class="'+(state.authMode==='signup'?'active':'')+'" onclick="state.authMode=\'signup\';render()">Create account</button><button class="'+(state.authMode==='login'?'active':'')+'" onclick="state.authMode=\'login\';render()">Sign in</button></div><div class="eyebrow">'+(state.authMode==='signup'?'JOIN THE NETWORK':'WELCOME BACK')+'</div><h2>'+ (state.authMode==='signup'?'Your creative identity starts here.':'Welcome back to ReelPage.')+'</h2><p>Username and password only. No email address or email verification is used for your ReelPage login.</p>'+signupFields+loginFields+'<input id="authPassword" class="input" type="password" placeholder="Password · 8+ characters" autocomplete="'+(state.authMode==='signup'?'new-password':'current-password')+'"><button class="primary full" onclick="submitAuth()" '+(state.loading?'disabled':'')+'>'+(state.loading?(state.authStatus||'Opening secure account…'):state.authMode==='signup'?'Create my ReelPage →':'Sign in →')+'</button><small class="modal-note">ReelPage uses Supabase Auth behind the scenes; the email is an internal account identifier, not collected from you.</small></div></div>';
   }
   if(t==='person'){const p=state.selectedPerson; if(p){openPublicProfile(p.id); return '';} return '';}
   if(t==='boost')return boostModalHtml();
@@ -304,6 +371,7 @@ function updateUsernamePreview(){
   if(el)el.textContent=makeUsername(name)||'Your name will become your username';
 }
 async function submitAuth(){
+  if(state.loading)return;
   const password=document.getElementById('authPassword')?.value||'';
   if(password.length<8)return showToast('Use at least 8 characters for your password.');
   const payload={action:state.authMode,password};
@@ -324,19 +392,23 @@ async function submitAuth(){
     if(!payload.location)return showToast('Please enter your city or region.');
     payload.username=makeUsername(payload.full_name);
   }
-  state.loading=true;render();
+  state.loading=true;state.authStatus=state.authMode==='signup'?'Creating your ReelPage…':'Signing you in…';render();
   try{
     const res=await fetch(AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Authentication failed.');
     if(!data.session)throw new Error('No session was returned. Please try again.');
-    await sb.auth.setSession(data.session);
-    if(state.authMode==='signup'){
-      const profileUpdate=await sb.from('profiles').update({country:payload.country,location:payload.location}).eq('id',data.user.id);
-      if(profileUpdate.error)throw new Error(profileUpdate.error.message);
-    }
-    await loadUser(); state.loading=false; state.modal=null; await hydrate(); showToast(state.authMode==='signup'?'Welcome to ReelPage. Your profile is live.':'Welcome back to ReelPage.');
-  }catch(e){state.loading=false;render();showToast(e.message||'Authentication failed.');}
+    const sessionResult=await sb.auth.setSession(data.session);
+    if(sessionResult.error)throw sessionResult.error;
+    state.user=Object.assign({id:data.user?.id},data.profile||{},{id:data.user?.id});
+    if(!state.user.full_name)await loadUser();
+    state.loading=false;state.authStatus='';
+    state.modal=null;state.tab='Home';render();
+    showToast(state.authMode==='signup'?'Account created successfully. Welcome to ReelPage.':'Signed in successfully.');
+    void hydrate();
+  }catch(e){
+    state.loading=false;state.authStatus='';render();showToast(e.message||'Authentication failed.');
+  }
 }
 async function loadUser(){
   const {data}=await sb.auth.getUser();
@@ -391,17 +463,37 @@ async function createScript(){
   const genre=document.getElementById('scriptGenre')?.value.trim()||null;
   const description=document.getElementById('scriptDescription')?.value.trim()||null;
   const price=Math.max(0,Number(document.getElementById('scriptPrice')?.value||0));
-  const rawPages=document.getElementById('scriptSamplePages')?.value||'';
-  const pages=rawPages.split(/\n\s*---+\s*PAGE\s*---+\s*\n|\f/).map(x=>x.trim()).filter(Boolean);
+  const file=document.getElementById('scriptPdf')?.files?.[0];
   if(!title||!logline)return showToast('Give the script a title and logline.');
-  if(pages.length>10)return showToast('ReelPage allows a maximum of 10 sample pages.');
-  const r=await sb.from('script_listings').insert({seller_id:state.user.id,title,logline,description,format,genre,price,currency:'NGN',status:'Available'}).select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at').single();
-  if(r.error)return showToast(r.error.message);
-  if(pages.length){
-    const sr=await sb.from('script_samples').upsert({script_id:r.data.id,writer_id:state.user.id,page_count:pages.length,pages,updated_at:new Date().toISOString()});
-    if(sr.error){await sb.from('script_listings').delete().eq('id',r.data.id);return showToast(sr.error.message);}
+  if(!file)return showToast('Upload the screenplay PDF so ReelPage can create the protected 10-page sample.');
+  if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))return showToast('Please upload a PDF screenplay.');
+  if(file.size>25*1024*1024)return showToast('Please keep screenplay PDFs under 25MB.');
+  state.busyAction='script';render();
+  try{
+    const sample=await extractPdfSample(file,10);
+    if(!sample.pages.length)throw new Error('I could not read the PDF pages. Please try another PDF.');
+    const r=await sb.from('script_listings').insert({seller_id:state.user.id,title,logline,description,format,genre,price,currency:'NGN',status:'Available'}).select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,preview_url,created_at').single();
+    if(r.error)throw new Error(r.error.message);
+    const sr=await sb.from('script_samples').upsert({script_id:r.data.id,writer_id:state.user.id,page_count:sample.pages.length,pages:sample.pages,updated_at:new Date().toISOString()});
+    if(sr.error){await sb.from('script_listings').delete().eq('id',r.data.id);throw new Error(sr.error.message);}
+    state.modal=null;state.busyAction=null;
+    await hydrate();
+    showToast('Published. ReelPage automatically stored the first '+sample.pages.length+' pages as the protected marketplace sample.');
+  }catch(e){state.busyAction=null;render();showToast(e.message||'Could not process the screenplay PDF.');}
+}
+async function extractPdfSample(file,maxPages=10){
+  if(!window.pdfjsLib)throw new Error('PDF reader is still loading. Please wait a moment and try again.');
+  const buffer=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buffer}).promise;
+  const count=Math.min(maxPages,pdf.numPages);
+  const pages=[];
+  for(let i=1;i<=count;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    const text=content.items.map(item=>item.str||'').join(' ').replace(/[ \t]+/g,' ').trim();
+    pages.push(text||'[This page contains no selectable text.]');
   }
-  state.modal=null;await hydrate();showToast('Your script listing is live. The sample stays locked until an interested filmmaker signs the ReelPage NDA.');
+  return {pages,pageCount:pdf.numPages};
 }
 const REELPAGE_NDA_TEXT='REELPAGE SCRIPT CONFIDENTIALITY AGREEMENT (NDA) v1.0. The interested viewer agrees to keep the script and sample pages confidential, use them only to evaluate a potential creative or commercial collaboration, and not reproduce, distribute, publish, forward, sell or exploit the material without the writer’s permission. This agreement does not transfer copyright or ownership. Commercial transactions remain between the parties.';
 async function signScriptNda(){
@@ -519,7 +611,7 @@ window.setTab=setTab;window.openAuth=openAuth;function speakPremiumPitch(){if(wi
 async function startPremiumCheckout(){if(!state.user)return openAuth('signup');showToast('Opening secure ReelPage Pro checkout…');const {data,error}=await sb.functions.invoke('reelpage-payments',{body:{kind:'premium'}});if(error||!data?.authorization_url){showToast(data?.error||'Payment provider is not configured yet.');return;}window.location.href=data.authorization_url;}
 function openPremium(){state.modal={type:'premium'};render();}
 window.openCreate=openCreate;window.closeModal=closeModal;window.submitAuth=submitAuth;
-window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.showToast=showToast;window.sb=sb;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
+window.followTo=followTo;window.connectTo=connectTo;window.respondToConnection=respondToConnection;window.openNetwork=openNetwork;window.loadNetwork=loadNetwork;window.toggleLike=toggleLike;window.showToast=showToast;window.sb=sb;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
 window.saveProfile=saveProfile;window.openPremium=openPremium;window.startPremiumCheckout=startPremiumCheckout;window.speakPremiumPitch=speakPremiumPitch;window.openBoost=openBoost;window.startBoostCheckout=startBoostCheckout;window.signScriptNda=signScriptNda;window.openScriptSample=openScriptSample;window.uploadProfileImage=uploadProfileImage;window.hydrate=hydrate;window.createScript=createScript;window.requestScript=requestScript;window.messageScriptSeller=messageScriptSeller;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
 
 render();
