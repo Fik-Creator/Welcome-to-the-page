@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  const WAKE = /\b(?:hey\s+)?reel\s*ai\b[,:.!\s-]*/i;
+  const WAKE = /^(?:(?:hey|hi|hello|okay|ok)\s+)?reel\s*ai\b[,:.!?\s-]*/i;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const ai = {
     recognition:null,
@@ -58,7 +58,7 @@
 
   function answer(text, opts={}){
     addChat('ai',text);
-    if(opts.speak!==false) speak(text);
+    speak(text,opts);
   }
 
   function mount(){
