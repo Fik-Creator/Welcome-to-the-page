@@ -374,6 +374,55 @@
     answer('I can do that inside ReelPage, but I need a little more detail. Try: “search for directors in Lagos”, “connect me with Amara”, “craft a message to Tobi about my short film”, or “open the script marketplace”.');
   }
 
+
+
+  async function openComments(postId){
+    const db=window.sb;
+    if(!db){toast('ReelPage data is not ready.');return;}
+    const existing=document.getElementById('reelCommentsBackdrop');
+    if(existing)existing.remove();
+    const wrap=document.createElement('div');
+    wrap.id='reelCommentsBackdrop';
+    wrap.className='reel-comments-backdrop';
+    wrap.innerHTML='<div class="reel-comments-modal"><header class="reel-comments-head"><div><strong>Conversation</strong><small style="display:block;color:#6e8293;margin-top:3px">Comments on this post</small></div><button type="button" class="reel-ai-close" id="reelCommentsClose">×</button></header><div class="reel-comments-list" id="reelCommentsList"><div style="color:#71869a;padding:20px 0">Loading comments…</div></div><form class="reel-comments-form" id="reelCommentsForm"><input id="reelCommentInput" maxlength="2000" placeholder="Add a thoughtful comment…" aria-label="Comment"><button type="submit">Post</button></form></div>';
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click',e=>{if(e.target===wrap)wrap.remove();});
+    wrap.querySelector('#reelCommentsClose').onclick=()=>wrap.remove();
+    const list=wrap.querySelector('#reelCommentsList');
+    const renderComments=rows=>{
+      list.innerHTML=rows.length?rows.map(x=>'<div class="reel-comment">'+(window.avatar?window.avatar(x.author,'xs'):'')+'<div class="reel-comment-body"><b>'+escAI(x.author?.full_name||'ReelPage member')+'</b><div>'+escAI(x.body)+'</div><small>'+escAI(new Date(x.created_at).toLocaleString())+'</small></div></div>').join(''):'<div style="color:#71869a;padding:30px 0;text-align:center">Be the first to start the conversation.</div>';
+      list.scrollTop=list.scrollHeight;
+    };
+    const load=async()=>{
+      const {data,error}=await db.from('post_comments').select('id,post_id,author_id,body,created_at,profiles(id,full_name,username,headline,avatar_url)').eq('post_id',postId).order('created_at',{ascending:true}).limit(100);
+      if(error){list.innerHTML='<div style="color:#ff8d9a;padding:20px 0">Comments could not be loaded.</div>';return;}
+      renderComments((data||[]).map(x=>({...x,author:x.profiles})));
+    };
+    await load();
+    wrap.querySelector('#reelCommentsForm').onsubmit=async e=>{
+      e.preventDefault();
+      if(!window.state?.user){window.openAuth?.('login');return;}
+      const input=wrap.querySelector('#reelCommentInput');
+      const body=input.value.trim();
+      if(!body)return;
+      const {error}=await db.from('post_comments').insert({post_id:postId,author_id:window.state.user.id,body});
+      if(error){toast(error.message);return;}
+      input.value='';
+      await load();
+    };
+  }
+
+  async function sharePost(postId){
+    const url=window.location.origin+window.location.pathname+'#post-'+encodeURIComponent(postId);
+    const title='ReelPage creative post';
+    try{
+      if(navigator.share){await navigator.share({title,text:'A creative post on ReelPage',url});}
+      else if(navigator.clipboard){await navigator.clipboard.writeText(url);toast('Post link copied.');}
+      else toast('Copy this page link to share the post.');
+    }catch(e){if(e?.name!=='AbortError')toast('Sharing was cancelled or unavailable.');}
+  }
+
+  window.openComments=openComments;window.sharePost=sharePost;
   window.reelAiCommand=runCommand;
   window.openReelAI=()=>{mount();setPanel(true);};
   window.toggleReelAIVoice=toggleListening;
