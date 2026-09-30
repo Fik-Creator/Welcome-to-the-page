@@ -84,7 +84,7 @@ function avatar(user,cls=''){
 
 let searchTimer=null;
 function queueSearch(value){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=value;render();},180);}
-function setTab(tab){ state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function setTab(tab){ state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null; render(); if(tab==='Connect'&&state.user)void loadNetwork(state.user.id); window.scrollTo({top:0,behavior:'smooth'}); }
 function openPublicProfile(id){ state.viewedProfileId=id; state.profileViewTab='About'; state.tab='ProfileView'; state.selectedPerson=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function setProfileViewTab(tab){ state.profileViewTab=tab; render(); }
 function showToast(message){ state.toast=message; render(); clearTimeout(window.__rpToast); window.__rpToast=setTimeout(()=>{state.toast='';render()},2800); }
@@ -541,8 +541,13 @@ async function connectTo(id){
   if(!state.user)return openAuth('signup');
   if(String(id).startsWith('demo'))return showToast('Create your ReelPage account to connect with real creatives.');
   if(id===state.user.id)return showToast('That is your own profile.');
-  const r=await sb.from('connections').upsert({requester_id:state.user.id,addressee_id:id,status:'pending'});
-  showToast(r.error?(r.error.code==='23505'?'Connection request already sent.':r.error.message):'Connection request sent.');
+  const existing=await sb.from('connections').select('status').or('requester_id.eq.'+state.user.id+',addressee_id.eq.'+state.user.id).eq('requester_id',state.user.id).eq('addressee_id',id).maybeSingle();
+  if(existing.data?.status==='accepted')return showToast('You are already connected.');
+  if(existing.data?.status==='pending')return showToast('Connection request already sent.');
+  const r=await sb.from('connections').insert({requester_id:state.user.id,addressee_id:id,status:'pending'});
+  if(r.error)return showToast(r.error.message);
+  showToast('Connection request sent.');
+  if(state.tab==='Connect')await loadNetwork(state.user.id);
 }
 async function followTo(id){
   if(!state.user)return openAuth('signup');
