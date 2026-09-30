@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  const WAKE = /^(?:hey\s+)?reel\s*ai\b[,:.!\s-]*/i;
+  const WAKE = /\b(?:hey\s+)?reel\s*ai\b[,:.!\s-]*/i;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const ai = {
     recognition:null,
