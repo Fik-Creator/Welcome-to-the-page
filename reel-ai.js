@@ -325,7 +325,9 @@
 
   async function askServerAI(text){
     const known=productKnowledgeAnswer(text);
-    if(known){answer(known);return;}\n    const db=window.sb;\n    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
+    if(known){answer(known);return;}
+    const db=window.sb;
+    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
     answer('Let me think about that…',{speak:false});
     try{
       const profile=window.state?.user?{
