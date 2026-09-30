@@ -24,9 +24,15 @@ const DEMO = {
   ]
 };
 
+const DEMO_SCRIPTS = [
+  {id:'demo-script-1',seller_id:'demo-1',title:'The Last Bus',logline:'A teenage girl gets one final chance to say goodbye before leaving home.',description:'Contained short drama designed for a small cast and a focused production footprint.',format:'Short Film',genre:'Drama',language:'English',price:25000,currency:'NGN',status:'Available',seller:DEMO.profiles[0]},
+  {id:'demo-script-2',seller_id:'demo-2',title:'Market Day',logline:'Three friends discover that one chaotic market day can change everything.',description:'A fast-paced Nigerian comedy with ensemble energy and practical locations.',format:'Feature Film',genre:'Comedy',language:'English',price:75000,currency:'NGN',status:'Available',seller:DEMO.profiles[1]},
+  {id:'demo-script-3',seller_id:'demo-3',title:'After Rain',logline:'Young creatives rebuild their lives while a camera documents the process.',description:'A documentary treatment with room for development and local adaptation.',format:'Documentary',genre:'Documentary',language:'English',price:40000,currency:'NGN',status:'Available',seller:DEMO.profiles[2]}
+];
+
 const state = {
   tab:'Home', search:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
-  opps:DEMO.opps.slice(), posts:[], liked:new Set(), following:new Set(), messages:[],
+  opps:DEMO.opps.slice(), scripts:[], posts:[], liked:new Set(), following:new Set(), messages:[],
   selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null, modal:null, authMode:'signup', loading:false, toast:''
 };
 
@@ -67,7 +73,7 @@ function openAuth(mode='signup'){ state.authMode=mode; state.modal={type:'auth'}
 function closeModal(){ state.modal=null; render(); }
 
 function shell(){
-  const nav=[['Home','home'],['Discover','discover'],['Projects','projects'],['Opportunities','opportunities'],['Messages','messages'],['Profile','profile']];
+  const nav=[['Home','home'],['Discover','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Profile','profile']];
   return `<div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-brand">${brand()}</div>
@@ -80,12 +86,12 @@ function shell(){
     <main class="main">
       <header class="topbar">
         <div class="mobile-logo">${brand(true)}</div>
-        <div class="searchbox">${icon('search',17)}<input value="${esc(state.search)}" oninput="queueSearch(this.value)" placeholder="Search creatives, projects, opportunities..." aria-label="Search ReelPage"></div>
+        <div class="searchbox">${icon('search',17)}<input value="${esc(state.search)}" oninput="queueSearch(this.value)" placeholder="Search filmmakers, scripts, projects..." aria-label="Search ReelPage"></div>
         <div class="top-actions"><button class="icon-btn" aria-label="Notifications" onclick="showToast('Notifications are ready for your ReelPage account.')">${icon('bell',18)}</button>${state.user?'<button class="profile-chip" onclick="setTab(\'Profile\')">'+avatar(state.user,'xs')+'<span>'+esc(state.user.full_name||'You')+'</span></button>':'<button class="sign-btn" onclick="openAuth(\'login\')">Sign in</button>'}</div>
       </header>
       <section class="content">${page()}</section>
     </main>
-    <nav class="mobile-nav">${nav.map(([name,ico])=>`<button class="${state.tab===name?'active':''}" onclick="setTab('${name}')">${icon(ico,19)}<span>${name==='Opportunities'?'Calls':name}</span></button>`).join('')}</nav>
+    <nav class="mobile-nav">${nav.map(([name,ico])=>`<button class="${state.tab===name?'active':''}" onclick="setTab('${name}')">${icon(ico,19)}<span>${name==='Scripts'?'Scripts':name}</span></button>`).join('')}</nav>
   </div>${state.modal?modal():''}${state.toast?`<div class="toast">${logoMark('xs')}<span>${esc(state.toast)}</span></div>`:''}`;
 }
 
@@ -93,7 +99,7 @@ function page(){
   switch(state.tab){
     case 'Discover':return discoverPage();
     case 'Projects':return projectsPage();
-    case 'Opportunities':return opportunitiesPage();
+    case 'Scripts':return scriptsPage();
     case 'Messages':return messagesPage();
     case 'Profile':return profilePage();
     case 'ProfileView':return publicProfilePage();
@@ -116,7 +122,7 @@ function homePage(){
   <div class="people-grid">${state.profiles.slice(0,4).map(profileCard).join('')}</div>
   <div class="home-columns">
     <section class="surface"><div class="section-head compact"><div><div class="eyebrow">CREATIVE FEED</div><h2>What’s happening</h2></div><button class="text-btn" onclick="openCreate('post')">Post ${icon('plus',14)}</button></div>${feed.slice(0,4).map(postCard).join('')}</section>
-    <section class="surface"><div class="section-head compact"><div><div class="eyebrow">OPPORTUNITIES</div><h2>Open calls</h2></div><button class="text-btn" onclick="setTab('Opportunities')">View all ${icon('arrow',14)}</button></div>${state.opps.slice(0,4).map(oppRow).join('')}</section>
+    <section class="surface"><div class="section-head compact"><div><div class="eyebrow">SCRIPT MARKETPLACE</div><h2>Stories ready to shoot</h2></div><button class="text-btn" onclick="setTab('Scripts')">Browse scripts ${icon('arrow',14)}</button></div>${(state.scripts.length?state.scripts:DEMO_SCRIPTS).slice(0,3).map(scriptCard).join('')}</section>
   </div>`;
 }
 
@@ -131,9 +137,25 @@ function discoverPage(){
 function projectsPage(){
   return `<div class="page-title"><div><div class="eyebrow">PROJECTS</div><h1>Stories in motion.</h1><p>Discover films and creative projects looking for collaborators.</p></div><button class="primary" onclick="openCreate('project')">${icon('plus',16)} New project</button></div><div class="project-grid">${state.projects.map(projectCard).join('')}</div>`;
 }
+function scriptCard(s){
+  const seller=s.seller||state.profiles.find(p=>String(p.id)===String(s.seller_id))||{};
+  const demo=String(s.id||'').startsWith('demo');
+  const price=Number(s.price||0)===0?'Free':new Intl.NumberFormat('en-NG',{style:'currency',currency:s.currency||'NGN',maximumFractionDigits:0}).format(Number(s.price||0));
+  return `<article class="script-card">
+    <div class="script-poster"><span class="script-clapper">${icon('film',20)}</span><small>${esc(s.format||'Screenplay')}</small><strong>${esc(s.title)}</strong><em>${esc(s.genre||'Drama')}</em></div>
+    <div class="script-body"><div class="script-seller">${avatar(seller,'xs')}<span><b>${esc(seller.full_name||'ReelPage writer')}</b><small>${esc(seller.headline||'Writer')}</small></span></div><p>${esc(s.logline||s.description||'A story looking for its next producer, director or cast.')}</p><div class="script-meta"><span>${esc(s.language||'English')}</span><span>${esc(s.status||'Available')}</span><strong>${price}</strong></div><div class="script-actions"><button class="secondary small" onclick="messageScriptSeller('${esc(s.seller_id)}')">Message writer</button><button class="primary small" onclick="requestScript('${esc(s.id)}')">${demo?'View script':'Request script'}</button></div></div>
+  </article>`;
+}
+function scriptsPage(){
+  const scripts=state.scripts.length?state.scripts:DEMO_SCRIPTS;
+  return `<div class="page-title"><div><div class="eyebrow">SCRIPT MARKETPLACE</div><h1>Stories ready to become films.</h1><p>Browse screenplays, treatments and film ideas from writers across the ReelPage network.</p></div><button class="primary" onclick="openCreate('script')">${icon('plus',16)} List a script</button></div>
+  <div class="marketplace-hero"><div><span class="eyebrow">FOR FILMMAKERS</span><h2>Stop searching for jobs. Start finding stories.</h2><p>Writers can present their work. Producers and directors can discover stories, start a conversation and build the right team.</p></div><div class="marketplace-stat"><strong>${scripts.length}</strong><span>scripts visible now</span></div></div>
+  <div class="script-grid">${scripts.map(scriptCard).join('')}</div>`;
+}
 function opportunitiesPage(){
   return `<div class="page-title"><div><div class="eyebrow">OPPORTUNITIES</div><h1>Find the next door.</h1><p>Casting, writing, crew calls, fellowships and collaboration opportunities.</p></div><button class="primary" onclick="openCreate('opportunity')">${icon('plus',16)} Post opportunity</button></div><div class="opp-list">${state.opps.map(oppCard).join('')}</div>`;
 }
+
 
 function messagesPage(){
   if(!state.user)return `<div class="empty-state big">${logoMark('lg')}<div class="eyebrow">MESSAGING</div><h1>Your creative inbox.</h1><p>Sign in to message collaborators and keep project conversations in one place.</p><button class="primary" onclick="openAuth('login')">Sign in to messages</button></div>`;
@@ -210,7 +232,7 @@ function demoPosts(){return [
 ];}
 function postCard(p){
   const a=p.author||{},liked=state.liked.has(p.id);
-  return `<article class="post-card"><div class="post-head">${avatar(a,'sm')}<div><b>${esc(a.full_name||'ReelPage member')}</b><small>${esc(a.headline||'Creative')} · ${esc(p.created_at||'Now')}</small></div></div><p class="post-text">${esc(p.content)}</p>${p.media_url?'<img class="post-media" src="'+esc(p.media_url)+'" alt="Creative post media" loading="lazy">':''}<div class="post-actions"><button class="${liked?'liked':''}" onclick="toggleLike('${esc(p.id)}')">${icon('heart',17)} <span>${p.likes_count||0}</span></button><button onclick="showToast('Comments will be available in the next messaging release.')">${icon('messages',17)} Comment</button><button onclick="showToast('Share links are coming to the public release.')">${icon('arrow',17)} Share</button></div></article>`;
+  return `<article class="post-card"><div class="post-head">${avatar(a,'sm')}<div><b>${esc(a.full_name||'ReelPage member')}</b><small>${esc(a.headline||'Creative')} · ${esc(p.created_at||'Now')}</small></div></div><p class="post-text">${esc(p.content)}</p>${p.media_url?'<img class="post-media" src="'+esc(p.media_url)+'" alt="Creative post media" loading="lazy">':''}<div class="post-actions"><button class="${liked?'liked':''}" onclick="toggleLike('${esc(p.id)}')">${icon('heart',17)} <span>${p.likes_count||0}</span></button><button onclick="openComments('${esc(p.id)}')">${icon('messages',17)} Comment</button><button onclick="sharePost('${esc(p.id)}')">${icon('arrow',17)} Share</button></div></article>`;
 }
 
 function modal(){
@@ -225,6 +247,7 @@ function modal(){
   if(t==='person'){const p=state.selectedPerson; if(p){openPublicProfile(p.id); return '';} return '';}
   if(t==='profile')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">YOUR REELPAGE</div><h2>Edit your creative identity.</h2><p>Your profile is your professional calling card.</p><label class="photo-upload">${avatar(state.user,'edit-avatar')}<span>Change profile photo<input id="avatarInput" type="file" accept="image/*" hidden onchange="uploadProfileImage(this.files[0],'avatars','avatar_url')"></span></label><input id="editName" class="input" value="${esc(state.user.full_name||'')}" placeholder="Full name"><input id="editHeadline" class="input" value="${esc(state.user.headline||'')}" placeholder="Professional headline"><label class="field-label" for="editCountry">Country</label><select id="editCountry" class="input">${countryOptions(state.user.country||'NG')}</select><input id="editLocation" class="input" value="${esc(state.user.location||'')}" placeholder="City, state or region"><textarea id="editBio" class="input area" placeholder="About you">${esc(state.user.bio||'')}</textarea><input id="editSkills" class="input" value="${esc((state.user.skills||[]).join(', '))}" placeholder="Skills separated by commas"><button class="primary full" onclick="saveProfile()">Save profile →</button></div></div>`;
   if(t==='post')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="auth-logo">${brand()}</div><div class="eyebrow">CREATIVE FEED</div><h2>What are you working on?</h2><p>Share an update, call for collaborators or a thought from your creative journey.</p><textarea id="postContent" class="input area" placeholder="Tell the network what is happening..."></textarea><label class="upload-label">${icon('film',16)} Add image<input id="postMedia" type="file" accept="image/*" hidden></label><button class="primary full" onclick="createPost()">Publish post →</button></div></div>`;
+  if(t==='script')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">SCRIPT MARKETPLACE</div><h2>List a story filmmakers can discover.</h2><p>Share the idea, format and asking price. Keep the actual screenplay private until you choose to share it.</p><input id="scriptTitle" class="input" placeholder="Script title"><input id="scriptLogline" class="input" placeholder="One-line logline"><select id="scriptFormat" class="input"><option>Short Film</option><option>Feature Film</option><option>Series</option><option>Documentary</option><option>Web Series</option><option>Treatment</option></select><input id="scriptGenre" class="input" placeholder="Genre"><input id="scriptPrice" class="input" type="number" min="0" step="1000" placeholder="Price in NGN (0 = free)"><textarea id="scriptDescription" class="input area" placeholder="Tell filmmakers what makes this story special..."></textarea><button class="primary full" onclick="createScript()">Publish script listing →</button></div></div>`;
   if(t==='project')return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">NEW PROJECT</div><h2>Put your work in motion.</h2><input id="createTitle" class="input" placeholder="Project title"><input id="createMeta" class="input" placeholder="Format · Genre e.g. Short Film · Drama"><textarea id="createDesc" class="input area" placeholder="Logline or project description"></textarea><button class="primary full" onclick="createProject()">Create project →</button></div></div>`;
   return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">NEW OPPORTUNITY</div><h2>Open a door for someone.</h2><input id="oppTitle" class="input" placeholder="Opportunity title"><input id="oppType" class="input" placeholder="Type · Casting, Writing, Crew..."><input id="oppLocation" class="input" placeholder="Location or Remote"><textarea id="oppDesc" class="input area" placeholder="What are you looking for?"></textarea><input id="oppComp" class="input" placeholder="Compensation e.g. Paid / Negotiable"><button class="primary full" onclick="createOpportunity()">Post opportunity →</button></div></div>`;
 }
@@ -320,6 +343,32 @@ async function createOpportunity(){
   const r=await sb.from('opportunities').insert({creator_id:state.user.id,title,opportunity_type:document.getElementById('oppType').value.trim()||'Other',location:document.getElementById('oppLocation').value.trim()||'Remote',description:document.getElementById('oppDesc').value.trim(),compensation:document.getElementById('oppComp').value.trim()||null,status:'Open'});
   if(r.error)return showToast(r.error.message);state.modal=null;await hydrate();showToast('Opportunity posted.');
 }
+async function createScript(){
+  if(!state.user)return openAuth('signup');
+  const title=document.getElementById('scriptTitle')?.value.trim();
+  const logline=document.getElementById('scriptLogline')?.value.trim();
+  const format=document.getElementById('scriptFormat')?.value||'Short Film';
+  const genre=document.getElementById('scriptGenre')?.value.trim()||null;
+  const description=document.getElementById('scriptDescription')?.value.trim()||null;
+  const price=Math.max(0,Number(document.getElementById('scriptPrice')?.value||0));
+  if(!title||!logline)return showToast('Give the script a title and logline.');
+  const r=await sb.from('script_listings').insert({seller_id:state.user.id,title,logline,description,format,genre,price,currency:'NGN',status:'Available'}).select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at').single();
+  if(r.error)return showToast(r.error.message);
+  state.modal=null;await hydrate();showToast('Your script is now in the marketplace.');
+}
+async function requestScript(id){
+  if(String(id).startsWith('demo'))return showToast('Demo listing — sign in and publish real scripts to use the marketplace.');
+  const s=state.scripts.find(x=>String(x.id)===String(id));
+  if(!s)return showToast('Script listing not found.');
+  await messageScriptSeller(s.seller_id,'I found your script on ReelPage and would like to discuss it.');
+}
+async function messageScriptSeller(sellerId,prefill){
+  if(!state.user)return openAuth('signup');
+  if(String(sellerId)===String(state.user.id))return showToast('That is your own script listing.');
+  state.selectedConversation=sellerId;state.tab='Messages';
+  await loadMessages();render();
+  if(prefill){setTimeout(()=>{const input=document.getElementById('messageBody');if(input){input.value=prefill;input.focus();}},0);}
+}
 async function applyOpportunity(id){
   if(String(id).startsWith('demo'))return openAuth('signup');
   if(!state.user)return openAuth('signup');
@@ -350,7 +399,7 @@ async function toggleLike(id){
 }
 async function loadMessages(){
   if(!state.user)return;
-  const r=await sb.from('messages').select('*').or(`sender_id.eq.${state.user.id},recipient_id.eq.${state.user.id}`).order('created_at',{ascending:true}).limit(300);
+  const r=await sb.from('messages').select('id,sender_id,recipient_id,project_id,body,read_at,created_at').or(`sender_id.eq.${state.user.id},recipient_id.eq.${state.user.id}`).order('created_at',{ascending:true}).limit(120);
   state.messages=r.data||[];
 }
 async function sendMessage(e){
@@ -360,11 +409,11 @@ async function sendMessage(e){
 }
 async function hydrate(){
   try{
-    const [p,pr,o,posts,follows]=await Promise.all([
-      sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').order('created_at',{ascending:false}).limit(80),
-      sb.from('projects').select('*').order('created_at',{ascending:false}).limit(40),
-      sb.from('opportunities').select('*').order('created_at',{ascending:false}).limit(40),
-      sb.from('posts').select('id,author_id,content,media_url,created_at,profiles(id,full_name,username,headline,avatar_url)').order('created_at',{ascending:false}).limit(40),
+    const [p,pr,scripts,posts,follows]=await Promise.all([
+      sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').order('created_at',{ascending:false}).limit(60),
+      sb.from('projects').select('id,owner_id,title,logline,description,format,genre,status,poster_url,created_at').order('created_at',{ascending:false}).limit(30),
+      sb.from('script_listings').select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at,profiles(id,full_name,username,headline,avatar_url)').neq('status','Draft').order('created_at',{ascending:false}).limit(30),
+      sb.from('posts').select('id,author_id,content,media_url,created_at,profiles(id,full_name,username,headline,avatar_url)').order('created_at',{ascending:false}).limit(30),
       state.user?sb.from('follows').select('following_id').eq('follower_id',state.user.id).limit(500):Promise.resolve({data:[]})
     ]);
     const postIds=(posts.data||[]).map(x=>x.id);
@@ -396,8 +445,8 @@ async function boot(){
 }
 window.addEventListener('error',e=>console.warn('ReelPage UI error',e.error||e.message));
 window.setTab=setTab;window.openAuth=openAuth;window.openCreate=openCreate;window.closeModal=closeModal;window.submitAuth=submitAuth;
-window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
-window.saveProfile=saveProfile;window.uploadProfileImage=uploadProfileImage;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
+window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.showToast=showToast;window.sb=sb;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
+window.saveProfile=saveProfile;window.uploadProfileImage=uploadProfileImage;window.createScript=createScript;window.requestScript=requestScript;window.messageScriptSeller=messageScriptSeller;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
 
 render();
 boot();
