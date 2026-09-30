@@ -1,0 +1,49 @@
+/* Reel AI — cinematic filmmaker assistant */
+#reelAiRoot{position:fixed;right:22px;bottom:22px;z-index:9000;font-family:Manrope,DM Sans,system-ui,sans-serif}
+.reel-ai-fab{position:relative;display:flex;align-items:center;gap:9px;border:1px solid rgba(65,169,255,.5);border-radius:999px;padding:10px 15px 10px 11px;background:linear-gradient(135deg,#071322,#0d2a49);color:#fff;box-shadow:0 16px 50px rgba(0,0,0,.35),0 0 30px rgba(22,135,255,.18);cursor:pointer;transition:.22s transform,.22s box-shadow}
+.reel-ai-fab:hover{transform:translateY(-2px);box-shadow:0 20px 55px rgba(0,0,0,.4),0 0 35px rgba(22,135,255,.3)}
+.reel-ai-orbit{width:23px;height:23px;border:2px solid #1687ff;border-radius:50%;position:relative;display:block}
+.reel-ai-orbit:after{content:"";position:absolute;width:6px;height:6px;background:#63c7ff;border-radius:50%;right:-3px;top:1px;box-shadow:0 0 12px #1687ff}
+.reel-ai-mic{font-size:18px;line-height:1;color:#7dd2ff;transform:rotate(90deg);display:block}
+.reel-ai-fab-text{font-weight:800;letter-spacing:.01em}
+.reel-ai-fab.listening .reel-ai-orbit{animation:reelAiPulse 1.25s infinite}
+@keyframes reelAiPulse{50%{box-shadow:0 0 0 8px rgba(22,135,255,.05),0 0 24px rgba(22,135,255,.55)}}
+.reel-ai-panel{position:absolute;right:0;bottom:58px;width:min(390px,calc(100vw - 28px));height:min(620px,calc(100vh - 105px));display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(70,135,190,.28);border-radius:24px;background:linear-gradient(180deg,rgba(7,19,34,.98),rgba(4,9,16,.99));box-shadow:0 28px 90px rgba(0,0,0,.55);opacity:0;transform:translateY(10px) scale(.98);pointer-events:none;transition:.2s ease}
+.reel-ai-panel.open{opacity:1;transform:none;pointer-events:auto}
+.reel-ai-head{display:flex;align-items:center;gap:11px;padding:16px 17px;border-bottom:1px solid rgba(255,255,255,.08);background:linear-gradient(90deg,rgba(22,135,255,.11),transparent)}
+.reel-ai-avatar{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#1687ff,#52c6ff);color:#03101d;font-weight:900;box-shadow:0 0 24px rgba(22,135,255,.24)}
+.reel-ai-avatar span{font-size:8px;position:absolute;margin-top:27px;margin-left:25px;color:#fff;text-shadow:0 1px 4px #000}
+.reel-ai-head div:nth-child(2){display:flex;flex-direction:column;gap:2px;flex:1}
+.reel-ai-head strong{font-size:14px}.reel-ai-head small{color:#8da4b8;font-size:11px}
+.reel-ai-close{border:0;background:transparent;color:#8da4b8;font-size:24px;cursor:pointer}
+.reel-ai-messages{flex:1;overflow:auto;padding:16px;scroll-behavior:smooth}
+.reel-ai-msg{max-width:88%;margin:0 0 12px;padding:11px 12px;border-radius:15px;line-height:1.48;font-size:13px}
+.reel-ai-msg.ai{background:#0e1822;border:1px solid rgba(255,255,255,.06);border-top-left-radius:5px}
+.reel-ai-msg.user{margin-left:auto;background:#0d3b67;border-top-right-radius:5px}
+.reel-ai-msg-label{display:block;font-size:9px;font-weight:800;letter-spacing:.12em;color:#61c7ff;margin-bottom:4px}
+.reel-ai-msg p{margin:0;color:#eaf3fb}
+.reel-ai-chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 14px}
+.reel-ai-chips button{border:1px solid rgba(90,156,209,.28);background:#0a131c;color:#b8d7ef;padding:7px 9px;border-radius:999px;font-size:10px;cursor:pointer}
+.reel-ai-form{display:flex;gap:7px;padding:11px;border-top:1px solid rgba(255,255,255,.08);background:#07101a}
+.reel-ai-form input{min-width:0;flex:1;border:1px solid #233547;background:#0a141e;color:#fff;border-radius:12px;padding:11px 12px;outline:none}
+.reel-ai-form input:focus{border-color:#1687ff;box-shadow:0 0 0 3px rgba(22,135,255,.1)}
+.reel-ai-mic-btn,.reel-ai-send{width:40px;border:0;border-radius:12px;background:#122234;color:#9ec7e8;cursor:pointer}
+.reel-ai-send{background:#1687ff;color:#fff;font-size:17px;font-weight:900}
+.reel-ai-mic-btn.active{background:#1687ff;color:#fff;box-shadow:0 0 20px rgba(22,135,255,.35)}
+.reel-ai-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;color:#61788d;font-size:9px;border-top:1px solid rgba(255,255,255,.05)}
+.reel-ai-foot button{border:0;background:transparent;color:#5ebcff;font-weight:800;cursor:pointer}
+.reel-comments-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9100;display:grid;place-items:center;padding:18px}
+.reel-comments-modal{width:min(520px,100%);max-height:min(680px,90vh);overflow:hidden;display:flex;flex-direction:column;border:1px solid #263d51;border-radius:22px;background:#07111d;color:#fff;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.reel-comments-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid #1a2a38}
+.reel-comments-list{overflow:auto;flex:1;padding:14px 18px;min-height:180px}
+.reel-comment{display:flex;gap:9px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.reel-comment-body{font-size:12px;line-height:1.5}.reel-comment-body small{display:block;color:#6e8293;margin-top:3px}
+.reel-comments-form{display:flex;gap:8px;padding:12px;border-top:1px solid #1a2a38}
+.reel-comments-form input{flex:1;min-width:0;background:#0b1722;border:1px solid #23384a;color:#fff;border-radius:11px;padding:11px}
+.reel-comments-form button{border:0;background:#1687ff;color:#fff;border-radius:11px;padding:0 16px;font-weight:800}
+@media(max-width:700px){
+  #reelAiRoot{right:12px;bottom:74px}
+  .reel-ai-fab{padding:10px 12px}
+  .reel-ai-fab-text{display:none}
+  .reel-ai-panel{bottom:54px;height:min(640px,calc(100vh - 130px))}
+}
