@@ -424,8 +424,8 @@ async function hydrate(){
     else if(!state.profiles.length)state.profiles=DEMO.profiles.slice();
     if(pr.data?.length)state.projects=pr.data;
     else state.projects=DEMO.projects.slice();
-    if(o.data?.length)state.opps=o.data;
-    else state.opps=DEMO.opps.slice();
+    if(scripts.data?.length)state.scripts=scripts.data.map(x=>({...x,seller:x.profiles}));
+    else state.scripts=DEMO_SCRIPTS.slice();
     const counts={};(likes.data||[]).forEach(x=>counts[x.post_id]=(counts[x.post_id]||0)+1);
     state.liked=new Set((likes.data||[]).filter(x=>x.user_id===state.user?.id).map(x=>x.post_id));
     state.following=new Set((follows.data||[]).map(x=>x.following_id));
@@ -446,7 +446,7 @@ async function boot(){
 window.addEventListener('error',e=>console.warn('ReelPage UI error',e.error||e.message));
 window.setTab=setTab;window.openAuth=openAuth;window.openCreate=openCreate;window.closeModal=closeModal;window.submitAuth=submitAuth;
 window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.showToast=showToast;window.sb=sb;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
-window.saveProfile=saveProfile;window.uploadProfileImage=uploadProfileImage;window.createScript=createScript;window.requestScript=requestScript;window.messageScriptSeller=messageScriptSeller;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
+window.saveProfile=saveProfile;window.uploadProfileImage=uploadProfileImage;window.hydrate=hydrate;window.createScript=createScript;window.requestScript=requestScript;window.messageScriptSeller=messageScriptSeller;window.messagePerson=messagePerson;window.sendMessage=sendMessage;window.loadMessages=loadMessages;window.signOut=signOut;window.openPerson=openPerson;window.state=state;window.render=()=>document.getElementById('app').innerHTML=shell();
 
 render();
 boot();
