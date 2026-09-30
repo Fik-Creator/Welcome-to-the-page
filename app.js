@@ -271,7 +271,7 @@ function modal(){
 
 function openCreate(type){ if(!state.user && type!=='profile'){openAuth('signup');return;} state.modal={type}; render(); }
 function openPerson(id){state.selectedPerson=state.profiles.find(p=>p.id===id);if(state.selectedPerson)state.modal={type:'person'};render();}
-function messagePerson(id){state.modal=null;state.selectedConversation=id;state.tab='Messages';loadMessages().then(render);}
+async function messagePerson(id){state.modal=null;state.selectedConversation=id;state.tab='Messages';await loadMessages();render();}
 function makeUsername(name){
   return String(name||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,24);
 }
