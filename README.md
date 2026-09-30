@@ -1,53 +1,48 @@
 # REELPAGE
 
-REELPAGE is a responsive professional creative network for actors, writers, directors, producers, crew and creative businesses — starting with Nollywood.
+REELPAGE is a filmmaker-first professional network: a LinkedIn-style home for actors, writers, directors, producers, cinematographers, editors, crew and creative businesses, starting with Nollywood.
 
-## Current MVP
+## Product
 
-- Blue / black cinematic ReelPage brand system with a reel + P mark.
-- ReelPage mark used in navigation, mobile navigation, favicon, profile avatars, empty states, hero and cards.
-- Username + password onboarding with no email collection or verification step.
-- Supabase Auth, Postgres, Row Level Security and Storage.
-- Creative profiles with photo, cover image, headline, bio and skills.
-- Creative feed with image posts and likes.
-- Follow system.
-- Projects and opportunities.
-- Opportunity applications.
-- Direct messages between registered creatives.
-- Responsive desktop, tablet and mobile navigation.
-- Lazy-loaded post media and bounded list queries for a stable first release.
+- Professional filmmaker profiles with headshots, cover images, bios, skills, projects and public posts.
+- Creative feed for normal social posting — not just script hunting.
+- Discover search for creatives by name, role, skill and location.
+- Connections, follows and private messaging.
+- **Reel AI**: voice wake phrase, text assistant, in-app commands, account search, connection requests, message navigation, message drafting, direct message sending, post/project/script creation flows, and profile interview questions.
+- **Script Marketplace**: writers can list screenplays/treatments with loglines, formats, genres and prices; filmmakers can discover listings and contact writers.
+- Working post likes, comments and share links.
+- Responsive cinematic interface designed around filmmaking rather than generic corporate networking.
 
 ## Stack
 
-- Static HTML/CSS/JavaScript frontend.
-- Supabase Postgres + Row Level Security.
-- Supabase Auth.
-- Supabase Storage.
-- Supabase Edge Function: `reelpage-auth`.
-- GitHub Pages deployment workflow.
+- Static HTML/CSS/JavaScript frontend
+- Supabase Auth, Postgres, Storage and Realtime-ready backend
+- Supabase Edge Function for username/password authentication
+- Vercel deployment target
 
-## Production notes
+## Performance and security work
 
-The frontend uses bounded Supabase queries, indexed data access, lazy media loading patterns and debounced search rendering. It is structured to grow without loading entire tables into the browser. Million-user scale still requires production load testing, observability, CDN/storage tuning, rate limiting and database capacity planning before launch.
+- Scoped feed queries and bounded result sets instead of loading entire tables.
+- Targeted indexes for feed, messaging, connections and marketplace queries.
+- Trigram indexes for scalable profile/script search.
+- Row Level Security on social, messaging, script marketplace and comment data.
+- Production security headers and microphone permission support for Reel AI.
+- Browser caching avoids long-lived immutable caching for mutable application JS/CSS, preventing stale deployments.
 
-No software can honestly guarantee zero glitches for every device or traffic pattern, so production monitoring and iterative testing remain part of the launch process.
+## Reel AI voice
 
-## Hosting
+Reel AI uses the browser Web Speech API. The user activates voice once, then the assistant listens for the wake phrase **“Reel AI”** and replies **“I am listening.”** It then accepts an in-app command.
 
-The repository contains a GitHub Pages workflow at `.github/workflows/pages.yml`. GitHub Pages can publish directly from GitHub Actions. GitHub's documentation describes the workflow and custom-domain setup.
+Speech recognition support varies by browser; Chrome/Edge desktop are the primary target for the continuous wake-word experience. Speech synthesis is broadly supported.
 
-Default project URL after Pages is enabled:
-`https://fik-creator.github.io/Welcome-to-the-page/`
+## Deployment
 
-For a custom REELPAGE domain, configure the domain in GitHub Pages and then add the required DNS record at the domain provider. GitHub recommends verifying a custom domain before attaching it to the repository.
+GitHub repository: `Fik-Creator/Welcome-to-the-page`
 
-## Supabase
+Vercel project name: **ReelPage**
 
-Project: REELPAGE  
-Region: eu-west-1
+This repository is intentionally kept under its existing GitHub name. The product and deployment branding are REELPAGE / ReelPage.
 
-The browser contains only the Supabase publishable key. The service-role credential remains inside the deployed Edge Function.
+## Scale note
 
-## Security
-
-Row Level Security is enabled across application tables. Media uploads are scoped to the authenticated user's folder, while public media buckets allow public viewing of published images. The username/password Edge Function creates confirmed internal auth identities without asking users for an email address.
+The current architecture is designed as a lean, serverless MVP foundation with bounded queries, RLS, indexes, CDN-friendly static assets and Supabase-backed persistence. It has **not** been load-tested to prove one million concurrent or registered users. A true million-user launch still requires production load testing, capacity sizing, observability, rate limiting/abuse controls, storage/CDN strategy, search infrastructure, realtime capacity planning, backups and operational monitoring.
