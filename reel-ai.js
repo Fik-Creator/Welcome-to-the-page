@@ -19,19 +19,19 @@
   window.ReelAI = ai;
 
   const escAI = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const speak = (text) => {
-    if(!('speechSynthesis' in window) || !text) return;
+  const speak = (text, opts={}) => {
+    if(!('speechSynthesis' in window) || !text || opts.silent) return;
     try{
-      ai.speaking=true;
-      window.speechSynthesis.cancel();
-      const u=new SpeechSynthesisUtterance(String(text));
-      u.lang='en-NG';
-      u.rate=1.02;
-      u.pitch=1;
-      u.onend=()=>{ai.speaking=false; if(ai.listening && ai.recognition) safeStart();};
-      u.onerror=()=>{ai.speaking=false; if(ai.listening && ai.recognition) safeStart();};
+      ai.speaking=true; window.speechSynthesis.cancel();
+      const clean=String(text).replace(/[*_#]/g,'').replace(/<[^>]+>/g,'');
+      const u=new SpeechSynthesisUtterance(clean); u.lang='en-NG'; u.rate=opts.rate||0.98; u.pitch=opts.pitch||1.02;
+      const voices=window.speechSynthesis.getVoices?.()||[];
+      const preferred=voices.find(v=>/English.*Nigeria/i.test(v.name+' '+v.lang))||voices.find(v=>/^en(-|_)(GB|US)/i.test(v.lang))||voices[0];
+      if(preferred)u.voice=preferred;
+      u.onend=()=>{ai.speaking=false;updateUI();if(ai.listening)setTimeout(safeStart,180);};
+      u.onerror=()=>{ai.speaking=false;updateUI();if(ai.listening)setTimeout(safeStart,180);};
       window.speechSynthesis.speak(u);
-    }catch(_){}
+    }catch(_){ai.speaking=false;updateUI();}
   };
 
   function toast(message){
@@ -175,7 +175,7 @@
 
   function toggleListening(){
     if(!SpeechRecognition){
-      answer('Voice recognition is not available in this browser. Try Chrome or Edge on desktop.',{speak:false});
+      answer('Voice recognition is not available in this browser. Try Chrome or Edge on desktop.',{silent:true});
       return;
     }
     if(ai.listening){
@@ -195,7 +195,7 @@
     if(!q){answer('Tell me the name, role, skill or city you want to search.');return;}
     const db=window.sb;
     if(!db){answer('The ReelPage data connection is not ready yet.');return;}
-    answer('Searching ReelPage for '+q+'…',{speak:false});
+    answer('Searching ReelPage for '+q+'…',{silent:true});
     const fields='id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at';
     let data=[],error=null;
     const locationMatch=q.match(/^(.+?)\s+(?:in|at|from)\s+(.+)$/i);
@@ -368,7 +368,7 @@
     if(/\b(?:open|go to|show)\b.*\b(?:network|connections?|connect)\b/.test(lower)){window.setTab?.('Connect');window.loadNetwork?.(window.state?.user?.id);answer('Opening your Connect page.');return;}
     if(/\b(?:show|open|view)\b.*\b(?:followers|following)\b/.test(lower)){const tab=/following/.test(lower)?'following':'followers';window.openNetwork?.(tab);answer('Opening your '+tab+' list.');return;}
     if(/^(stop|go quiet|stop listening|turn off voice)/.test(lower)){
-      ai.listening=false;ai.armed=false;try{ai.recognition?.stop();}catch(_){ }updateUI();answer('Voice listening is off.',{speak:false});return;
+      ai.listening=false;ai.armed=false;try{ai.recognition?.stop();}catch(_){ }updateUI();answer('Voice listening is off.',{silent:true});return;
     }
     if(/\b(?:open|go to|show)\b.*\b(?:script|scripts|marketplace)\b/.test(lower)){
       window.setTab?.('Scripts');answer('Opening the script marketplace.');return;
@@ -381,7 +381,7 @@
     if(/\b(?:edit|update|change)\b.*\b(?:about|bio|professional story|profile)\b/.test(lower)){window.openCreate?.('profile');answer('Opening your profile editor.');return;}
     if(/\b(?:sign out|log me out|logout)\b/.test(lower)){window.signOut?.();answer('You are signed out.');return;}
 
-    const searchMatch=lower.match(/(?:search|find|look for|show me)\s+(?:for\s+)?(?:an?\s+)?(?:account|accounts|creative|creatives|filmmaker|filmmakers|writer|writers|actor|actors|director|directors|producer|producers|person|people)?\s*(?:named\s+)?(.+)/);
+    const searchMatch=lower.match(/(?:search|find|look for|show me)\s+(?:for\s+)?(?:an?\s+)?(?:creative|creatives|filmmaker|filmmakers|writer|writers|actor|actors|director|directors|producer|producers|person|people|profile|profiles)\s+(?:named\s+)?(.+)/);
     if(searchMatch){
       let term=searchMatch[1].trim();
       term=term.replace(/\b(?:in|from)\s+(?:the\s+)?(?:network|reelpage)\b/,'').trim();
@@ -433,7 +433,7 @@
       if(!person){answer('I could not find that creative.');return;}
       const body=craftedMessage(person,craftMatch[2]);
       await openMessage(person,body);
-      answer('I drafted the message and placed it in your conversation with '+person.full_name+'.',{speak:false});
+      answer('I drafted the message and placed it in your conversation with '+person.full_name+'.',{silent:true});
       return;
     }
 
@@ -456,7 +456,7 @@
 
     if(/\b(?:share)\b.*\bpost\b/.test(lower)){answer('Use the Share button on the post you want to share, and Reel AI will handle the rest once the post is selected.');return;}
 
-    answer('I can do that inside ReelPage, but I need a little more detail. Try: “search for directors in Lagos”, “connect me with Amara”, “craft a message to Tobi about my short film”, or “open the script marketplace”.');
+    await askServerAI(text);
   }
 
 
@@ -517,7 +517,7 @@
   window.openComments=openComments;window.sharePost=sharePost;
   window.reelAiCommand=runCommand;
   window.openReelAI=()=>{mount();setPanel(true);};
-  window.toggleReelAIVoice=toggleListening;
+  window.toggleReelAIVoice=toggleListening;window.speakReelAI=(text,opts)=>speak(text,opts);
 
   // Voice is opt-in at the browser level: the user starts listening once, then Reel AI keeps the recognition session alive.
   // This avoids silently activating a microphone without a user gesture.
