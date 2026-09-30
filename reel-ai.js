@@ -199,22 +199,39 @@
   }
 
   async function searchProfiles(term){
-    const q=String(term||'').trim().replace(/[,%()]/g,' ').replace(/[.*]/g,' ').replace(/\s+/g,' ').slice(0,60);
+    const q=String(term||'').trim().replace(/[,%()]/g,' ').replace(/[.*]/g,' ').replace(/\s+/g,' ').slice(0,80);
     if(!q){answer('Tell me the name, role, skill or city you want to search.');return;}
     const db=window.sb;
     if(!db){answer('The ReelPage data connection is not ready yet.');return;}
     answer('Searching ReelPage for '+q+'…',{speak:false});
-    const filter=`full_name.ilike.%${q}%,username.ilike.%${q}%,headline.ilike.%${q}%,location.ilike.%${q}%`;
-    const {data,error}=await db.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').or(filter).order('created_at',{ascending:false}).limit(24);
+    const fields='id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at';
+    let data=[],error=null;
+    const locationMatch=q.match(/^(.+?)\s+(?:in|at|from)\s+(.+)$/i);
+    if(locationMatch){
+      const role=locationMatch[1].trim(), loc=locationMatch[2].trim();
+      const [a,b]=await Promise.all([
+        db.from('profiles').select(fields).or(`full_name.ilike.%${role}%,username.ilike.%${role}%,role.ilike.%${role}%,headline.ilike.%${role}%`).limit(60),
+        db.from('profiles').select(fields).or(`location.ilike.%${loc}%,country.ilike.%${loc}%`).limit(100)
+      ]);
+      error=a.error||b.error;
+      if(!error){
+        const ids=new Set((b.data||[]).map(x=>String(x.id)));
+        data=(a.data||[]).filter(x=>ids.has(String(x.id))).slice(0,24);
+      }
+    }else{
+      const filter=`full_name.ilike.%${q}%,username.ilike.%${q}%,role.ilike.%${q}%,headline.ilike.%${q}%,location.ilike.%${q}%`;
+      const result=await db.from('profiles').select(fields).or(filter).order('created_at',{ascending:false}).limit(24);
+      data=result.data||[];error=result.error;
+    }
     if(error){answer('I could not complete that search right now.');return;}
     if(window.state){
-      window.state.profiles=data||[];
+      window.state.profiles=data;
       window.state.search=q;
       window.state.tab='Discover';
       window.state.viewedProfileId=null;
       window.render();
     }
-    answer(data?.length?`I found ${data.length} creative profile${data.length===1?'':'s'} matching “${q}”.`:'I could not find a matching profile yet.');
+    answer(data.length?`I found ${data.length} creative profile${data.length===1?'':'s'} matching “${q}”.`:'I could not find a matching profile yet.');
   }
 
   async function findPerson(term){
