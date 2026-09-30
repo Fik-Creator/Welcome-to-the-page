@@ -401,6 +401,23 @@
       await window.followTo?.(person.id);answer('I handled the follow action for '+person.full_name+'.');return;
     }
 
+    const connectMatch2=text.match(/^(?:connect|send a connection request)\s+(?:me\s+)?(?:with|to)\s+(.+)$/i);
+    if(connectMatch2){
+      const person=await findPerson(connectMatch2[1]);
+      if(!person){answer('I could not find that creative.');return;}
+      const result=await doAction('connect',{target_id:person.id});
+      if(result)answer('Connection request sent to '+person.full_name+'.');
+      return;
+    }
+    const followMatch2=text.match(/^follow\s+(.+)$/i);
+    if(followMatch2){
+      const person=await findPerson(followMatch2[1]);
+      if(!person){answer('I could not find that creative.');return;}
+      const result=await doAction('follow',{target_id:person.id});
+      if(result)answer('You are now following '+person.full_name+'.');
+      return;
+    }
+
     const sendMatch=text.match(/(?:send|message)\s+(?:a\s+)?message\s+(?:to|for)\s+(.+?)\s+(?:saying|that says|:)(.+)/i);
     if(sendMatch){
       const person=await findPerson(sendMatch[1]);
