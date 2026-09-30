@@ -308,6 +308,17 @@
     return false;
   }
 
+  async function askServerAI(text){
+    const db=window.sb;
+    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
+    answer('Let me think about that…',{speak:false});
+    try{
+      const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text}});
+      if(error||!data?.answer){answer(data?.error||'I could not get a full answer right now.');return;}
+      answer(data.answer);
+    }catch(_){answer('I can handle ReelPage actions directly. For broader questions, my AI service is not connected yet.');}
+  }
+
   async function runCommand(raw){
     const text=String(raw||'').trim();
     if(!text)return;
@@ -317,7 +328,8 @@
     const lower=text.toLowerCase();
 
     if(/^help|what can you do|commands/.test(lower)){
-      answer('I can search creatives, open profiles and sections, follow or connect with people, open or send messages, craft messages, publish posts, create projects, list scripts, share posts, and help complete your profile.');
+      askServerAI(text);
+
       return;
     }
     if(/^(stop|go quiet|stop listening|turn off voice)/.test(lower)){
