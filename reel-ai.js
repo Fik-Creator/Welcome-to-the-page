@@ -308,6 +308,15 @@
     return false;
   }
 
+  async function doAction(action,payload={}){
+    if(!window.state?.user){window.openAuth?.('login');return null;}
+    try{
+      const {data,error}=await window.sb.functions.invoke('reelpage-agent',{body:{action,...payload}});
+      if(error||!data?.ok){answer(data?.error||'I could not complete that ReelPage action.');return null;}
+      return data;
+    }catch(_){answer('I could not complete that ReelPage action right now.');return null;}
+  }
+
   async function askServerAI(text){
     const db=window.sb;
     if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
@@ -326,6 +335,25 @@
     addChat('user',text);
     if(await handleFlow(text))return;
     const lower=text.toLowerCase();
+
+    const createPostMatch=text.match(/^(?:create|write|publish|post)\s+(?:a\s+)?post\s*[:,-]?\s*(.+)$/i);
+    if(createPostMatch){
+      const result=await doAction('create_post',{content:createPostMatch[1].trim()});
+      if(result){answer('Your post has been published to ReelPage.');if(window.hydrate)await window.hydrate();}
+      return;
+    }
+    const createProjectMatch=text.match(/^(?:create|start)\s+(?:a\s+)?project\s*(?:called|titled)?\s*[:,-]?\s*(.+)$/i);
+    if(createProjectMatch){
+      const result=await doAction('create_project',{title:createProjectMatch[1].trim()});
+      if(result){answer('Your project has been created.');if(window.hydrate)await window.hydrate();}
+      return;
+    }
+    const createOppMatch=text.match(/^(?:create|post)\s+(?:an\s+)?opportunity\s*[:,-]?\s*(.+)$/i);
+    if(createOppMatch){
+      const result=await doAction('create_opportunity',{title:createOppMatch[1].trim()});
+      if(result){answer('Your opportunity has been posted.');if(window.hydrate)await window.hydrate();}
+      return;
+    }
 
     if(/^help|what can you do|commands/.test(lower)){
       askServerAI(text);
