@@ -471,7 +471,7 @@ async function sendMessage(e){
 async function hydrate(){
   try{
     const [p,pr,scripts,posts,follows,mePremium]=await Promise.all([
-      sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').order('created_at',{ascending:false}).limit(60),
+      sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,is_premium,premium_until,followers_count,connections_count,created_at').order('is_premium',{ascending:false}).order('created_at',{ascending:false}).limit(60),
       sb.from('projects').select('id,owner_id,title,logline,description,format,genre,status,poster_url,created_at').order('created_at',{ascending:false}).limit(30),
       sb.from('script_listings').select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at,profiles(id,full_name,username,headline,avatar_url)').neq('status','Draft').order('created_at',{ascending:false}).limit(30),
       sb.from('posts').select('id,author_id,content,media_url,created_at,profiles(id,full_name,username,headline,avatar_url)').order('created_at',{ascending:false}).limit(30),
