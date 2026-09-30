@@ -42,7 +42,6 @@ const state = {
 // app.js uses lexical bindings; the feature modules intentionally use window.*.
 window.state = state;
 window.sb = sb;
-window.render = render;
 window.setTab = setTab;
 window.openAuth = openAuth;
 window.closeModal = closeModal;
