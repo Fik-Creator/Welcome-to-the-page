@@ -54,6 +54,23 @@ function logoMark(size='md') {
 function brand(compact=false){
   return '<div class="brand-lockup">'+logoMark('sm')+'<img class="rp-wordmark" src="reelpage-logo.svg" alt="ReelPage" loading="eager"></div>';
 };
+const ICONS = {
+  home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/>',
+  discover:'<circle cx="11" cy="11" r="7"/><path d="m16.2 16.2 4.2 4.2"/><path d="m8.5 13.5 5-5"/>',
+  scripts:'<path d="M4 5.5h16v13H4z"/><path d="m9 9 6 3-6 3z"/>',
+  projects:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5V3h8v2"/><path d="M3 10h18"/>',
+  messages:'<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
+  opportunities:'<path d="M6 7h12v13H6z"/><path d="M9 7V5h6v2"/><path d="M9 12h6M9 15h4"/>',
+  profile:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.8-3.5 3.2-5 7-5s6.2 1.5 7 5"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  bell:'<path d="M6 9a6 6 0 0 1 12 0c0 6 2 6 2 7H4c0-1 2-1 2-7"/><path d="M10 20h4"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  film:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m7 5 3 5-3 4M17 5l-3 5 3 4"/>',
+  send:'<path d="m3 11 18-8-8 18-2-7z"/><path d="m11 14 5-5"/>',
+  heart:'<path d="M20.8 8.8c0 5.3-8.8 10.3-8.8 10.3S3.2 14.1 3.2 8.8A4.7 4.7 0 0 1 12 6.1a4.7 4.7 0 0 1 8.8 2.7Z"/>',
+  close:'<path d="m6 6 12 12M18 6 6 18"/>'
+};
 function icon(name,size=18){ return `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||ICONS.home}</svg>`; }
 
 function avatar(user,cls=''){
