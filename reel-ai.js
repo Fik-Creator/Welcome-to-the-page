@@ -240,6 +240,7 @@
   async function openMessage(person,body){
     if(!window.state?.user){window.openAuth?.('login');return;}
     if(String(person.id)===String(window.state.user.id)){answer('That is your own profile. Pick another creative.');return;}
+    if(!window.state.profiles.some(p=>String(p.id)===String(person.id)))window.state.profiles.unshift(person);
     window.state.selectedConversation=person.id;
     window.state.tab='Messages';
     if(window.loadMessages)await window.loadMessages();
