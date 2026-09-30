@@ -229,7 +229,8 @@ function publicProfilePage(){
 }
 function checkItem(done,title,desc){return `<div class="check-item"><span class="${done?'done':''}">${done?'✓':'○'}</span><div><b>${title}</b><small>${desc}</small></div></div>`;}
 function profileCard(p){
-  return `<article class="person-card" onclick="openPublicProfile('${esc(p.id)}')">${avatar(p,'xl')}<div class="verified">${p.is_verified?'✓':''}</div><h3>${esc(p.full_name||p.name)}</h3><p>${esc(p.headline||p.role||'Creative')}</p><small>${esc(profilePlace(p))}</small><div class="tag-row small-tags">${(p.skills||[]).slice(0,2).map(s=>`<span>${esc(s)}</span>`).join('')}</div><button class="connect-btn" onclick="event.stopPropagation();followTo('${esc(p.id)}')">${state.following.has(p.id)?'Following':'Follow'}</button></article>`;
+  const premium=p.is_premium && (!p.premium_until || new Date(p.premium_until)>new Date());
+  return `<article class="person-card" onclick="openPublicProfile('${esc(p.id)}')">${avatar(p,'xl')}<div class="premium-ribbon">${premium?'✦ PRO':''}</div><div class="verified">${p.is_verified?'✓':''}</div><h3>${esc(p.full_name||p.name)}</h3><p>${esc(p.headline||p.role||'Creative')}</p><small>${esc(profilePlace(p))}</small><div class="tag-row small-tags">${(p.skills||[]).slice(0,2).map(s=>`<span>${esc(s)}</span>`).join('')}</div><button class="connect-btn" onclick="event.stopPropagation();followTo('${esc(p.id)}')">${state.following.has(p.id)?'Following':'Follow'}</button></article>`;
 }
 function projectCard(p){
   const image=p.image_url||'';
