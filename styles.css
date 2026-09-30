@@ -183,3 +183,5 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opac
 .passport-actions>*{flex:1}
 @media(max-width:1050px){.world-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.world-grid{grid-template-columns:1fr}.world-strip{display:block}.world-strip .secondary{margin-top:12px;width:100%}.passport-grid{grid-template-columns:1fr 1fr}.passport-actions{flex-direction:column}}
+
+.logout-side-btn{display:flex;align-items:center;gap:9px;width:100%;margin-top:8px;padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:#0a1520;color:#8fa8bc;font-size:11px;cursor:pointer}.logout-side-btn:hover{color:#fff;border-color:rgba(80,170,255,.3);background:#0e1d2c}
