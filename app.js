@@ -100,7 +100,8 @@ function shell(){
       <div class="sidebar-bottom">
         <button class="create-btn" onclick="openCreate('post')">${icon('plus',17)}<span>Create</span></button>
         <button class="mini-profile" onclick="setTab(&quot;Profile&quot;)">${avatar(state.user||'Guest','sm')}<span><b>${esc(state.user?.full_name||'Guest')}</b><small>${esc(state.user?.headline||'Explore ReelPage')}</small></span></button>
-      </div>
+      
+        <button class="logout-side-btn" onclick="signOut()">${icon('close',16)}<span>Log out</span></button></div>
     </aside>
     <main class="main">
       <header class="topbar">
