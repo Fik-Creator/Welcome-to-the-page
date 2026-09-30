@@ -324,7 +324,7 @@ function profileCard(p){
 function projectCard(p){
   const image=p.image_url||'';
   const bg=image?' style="background-image:linear-gradient(180deg,rgba(3,8,14,.08),rgba(3,8,14,.94)),url(&quot;'+esc(image)+'&quot;)"':'';
-  return '<article class="project-card"><div class="project-poster '+(image?'has-image':'')+'"'+bg+'>'+logoMark('sm')+'<span>'+esc(p.format||'Creative Project')+'</span><strong>'+esc(p.title)+'</strong><small>'+esc(p.genre||'')+'</small></div><div class="project-info"><span class="tiny">'+esc(p.status||'In Development')+'</span><h3>'+esc(p.title)+'</h3><p>'+esc(p.description||p.logline||'')+'</p><div class="project-foot"><span>'+esc(p.owner_id===state.user?.id?'Your project':'Creative project')+'</span><button class="text-btn" onclick="showToast(&quot;Project details are ready.&quot;)">View '+icon('arrow',13)+'</button></div></div></article>';
+  return '<article class="project-card"><div class="project-poster '+(image?'has-image':'')+'"'+bg+'>'+logoMark('sm')+'<span>'+esc(p.format||'Creative Project')+'</span><strong>'+esc(p.title)+'</strong><small>'+esc(p.genre||'')+'</small></div><div class="project-info"><span class="tiny">'+esc(p.status||'In Development')+'</span><h3>'+esc(p.title)+'</h3><p>'+esc(p.description||p.logline||'')+'</p><div class="project-foot"><span>'+esc(p.owner_id===state.user?.id?'Your project':'Creative project')+'</span><button class="text-btn" onclick="openProductionPassport('\${esc(p.id)}')">Passport '+icon('arrow',13)+'</button></div></div></article>';
 }
 function projectRow(p){return `<div class="data-row"><div class="mini-poster">${logoMark('xs')}</div><div><b>${esc(p.title)}</b><small>${esc([p.format,p.genre,p.status].filter(Boolean).join(' · '))}</small></div></div>`;}
 function oppCard(o){
