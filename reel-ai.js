@@ -332,6 +332,13 @@
 
       return;
     }
+    if(/^(repeat|say that again|what did you say)/.test(lower)){
+      const last=[...ai.history].reverse().find(x=>x.role==='ai');
+      if(last){answer(last.text);return;}
+      answer('I have not said anything yet.');return;
+    }
+    if(/\b(?:open|go to|show)\b.*\bnotifications?\b/.test(lower)){window.setTab?.('Notifications');answer('Opening notifications.');return;}
+    if(/\b(?:open|go to|show)\b.*\bnetwork|connections?\b/.test(lower)){window.setTab?.('Network');answer('Opening your network.');return;}
     if(/^(stop|go quiet|stop listening|turn off voice)/.test(lower)){
       ai.listening=false;ai.armed=false;try{ai.recognition?.stop();}catch(_){ }updateUI();answer('Voice listening is off.',{speak:false});return;
     }
@@ -386,6 +393,7 @@
     const profileMatch=/(?:help me|let us|let’s|lets)\s+(?:complete|improve|build|finish)\s+(?:my\s+)?profile/i;
     if(profileMatch||/ask me questions.*profile|interview me for my profile/i.test(lower)){await profileInterview();return;}
 
+    if(/\b(?:cancel|never mind|forget that)\b/.test(lower)){ai.flow=null;answer('Okay. I cancelled that.');return;}
     if(/\b(?:create|write|publish|post)\b.*\b(?:post|update)\b/.test(lower)){
       if(!window.state?.user){window.openAuth?.('login');return;}
       window.openCreate?.('post');answer('Post composer opened. Tell me what you want to publish.');return;
