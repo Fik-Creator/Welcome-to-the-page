@@ -33,7 +33,7 @@ const DEMO_SCRIPTS = [
 const state = {
   tab:'Home', search:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
   opps:DEMO.opps.slice(), scripts:[], posts:[], liked:new Set(), following:new Set(), messages:[],
-  selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null, modal:null, authMode:'signup', loading:false, toast:''
+  selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null,premium:false, modal:null, authMode:'signup', loading:false, toast:''
 };
 
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -368,16 +368,46 @@ async function createScript(){
   const genre=document.getElementById('scriptGenre')?.value.trim()||null;
   const description=document.getElementById('scriptDescription')?.value.trim()||null;
   const price=Math.max(0,Number(document.getElementById('scriptPrice')?.value||0));
+  const rawPages=document.getElementById('scriptSamplePages')?.value||'';
+  const pages=rawPages.split(/\n\s*---+\s*PAGE\s*---+\s*\n|\f/).map(x=>x.trim()).filter(Boolean);
   if(!title||!logline)return showToast('Give the script a title and logline.');
+  if(pages.length>10)return showToast('ReelPage allows a maximum of 10 sample pages.');
   const r=await sb.from('script_listings').insert({seller_id:state.user.id,title,logline,description,format,genre,price,currency:'NGN',status:'Available'}).select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at').single();
   if(r.error)return showToast(r.error.message);
-  state.modal=null;await hydrate();showToast('Your script is now in the marketplace.');
+  if(pages.length){
+    const sr=await sb.from('script_samples').upsert({script_id:r.data.id,writer_id:state.user.id,page_count:pages.length,pages,updated_at:new Date().toISOString()});
+    if(sr.error){await sb.from('script_listings').delete().eq('id',r.data.id);return showToast(sr.error.message);}
+  }
+  state.modal=null;await hydrate();showToast('Your script listing is live. The sample stays locked until an interested filmmaker signs the ReelPage NDA.');
+}
+const REELPAGE_NDA_TEXT='REELPAGE SCRIPT CONFIDENTIALITY AGREEMENT (NDA) v1.0. The interested viewer agrees to keep the script and sample pages confidential, use them only to evaluate a potential creative or commercial collaboration, and not reproduce, distribute, publish, forward, sell or exploit the material without the writer’s permission. This agreement does not transfer copyright or ownership. Commercial transactions remain between the parties.';
+async function signScriptNda(){
+  if(!state.user||!state.modal?.script)return openAuth('login');
+  const s=state.modal.script;
+  if(!document.getElementById('ndaAgree')?.checked)return showToast('Please confirm that you agree to the NDA.');
+  const r=await sb.from('script_ndas').insert({script_id:s.id,viewer_id:state.user.id,writer_id:s.seller_id,agreement_text:REELPAGE_NDA_TEXT});
+  if(r.error&&r.error.code!=='23505')return showToast(r.error.message);
+  state.modal=null;await openScriptSample(s.id);
+}
+async function openScriptSample(id){
+  if(!state.user)return openAuth('login');
+  const n=await sb.from('script_ndas').select('id').eq('script_id',id).eq('viewer_id',state.user.id).maybeSingle();
+  if(!n.data)return requestScript(id);
+  const r=await sb.from('script_samples').select('script_id,writer_id,page_count,pages').eq('script_id',id).maybeSingle();
+  if(r.error)return showToast(r.error.message);
+  if(!r.data)return showToast('The writer has not uploaded sample pages yet.');
+  const s=state.scripts.find(x=>String(x.id)===String(id));
+  state.modal={type:'scriptSample',script:s,sample:r.data};render();
 }
 async function requestScript(id){
   if(String(id).startsWith('demo'))return showToast('Demo listing — sign in and publish real scripts to use the marketplace.');
+  if(!state.user)return openAuth('signup');
   const s=state.scripts.find(x=>String(x.id)===String(id));
   if(!s)return showToast('Script listing not found.');
-  await messageScriptSeller(s.seller_id,'I found your script on ReelPage and would like to discuss it.');
+  if(String(s.seller_id)===String(state.user.id))return showToast('This is your own script.');
+  const n=await sb.from('script_ndas').select('id').eq('script_id',id).eq('viewer_id',state.user.id).maybeSingle();
+  if(n.data){openScriptSample(id);return;}
+  state.modal={type:'nda',script:s};render();
 }
 async function messageScriptSeller(sellerId,prefill){
   if(!state.user)return openAuth('signup');
@@ -426,12 +456,13 @@ async function sendMessage(e){
 }
 async function hydrate(){
   try{
-    const [p,pr,scripts,posts,follows]=await Promise.all([
+    const [p,pr,scripts,posts,follows,mePremium]=await Promise.all([
       sb.from('profiles').select('id,username,full_name,role,headline,bio,location,country,avatar_url,cover_url,skills,is_verified,followers_count,connections_count,created_at').order('created_at',{ascending:false}).limit(60),
       sb.from('projects').select('id,owner_id,title,logline,description,format,genre,status,poster_url,created_at').order('created_at',{ascending:false}).limit(30),
       sb.from('script_listings').select('id,seller_id,title,logline,description,format,genre,language,price,currency,status,cover_url,created_at,profiles(id,full_name,username,headline,avatar_url)').neq('status','Draft').order('created_at',{ascending:false}).limit(30),
       sb.from('posts').select('id,author_id,content,media_url,created_at,profiles(id,full_name,username,headline,avatar_url)').order('created_at',{ascending:false}).limit(30),
-      state.user?sb.from('follows').select('following_id').eq('follower_id',state.user.id).limit(500):Promise.resolve({data:[]})
+      state.user?sb.from('follows').select('following_id').eq('follower_id',state.user.id).limit(500):Promise.resolve({data:[]}),
+      state.user?sb.from('profiles').select('is_premium,premium_until').eq('id',state.user.id).maybeSingle():Promise.resolve({data:null})
     ]);
     const postIds=(posts.data||[]).map(x=>x.id);
     const likes=postIds.length
@@ -445,7 +476,7 @@ async function hydrate(){
     else state.scripts=DEMO_SCRIPTS.slice();
     const counts={};(likes.data||[]).forEach(x=>counts[x.post_id]=(counts[x.post_id]||0)+1);
     state.liked=new Set((likes.data||[]).filter(x=>x.user_id===state.user?.id).map(x=>x.post_id));
-    state.following=new Set((follows.data||[]).map(x=>x.following_id));
+    state.following=new Set((follows.data||[]).map(x=>x.following_id));state.premium=!!(mePremium.data?.is_premium && (!mePremium.data?.premium_until || new Date(mePremium.data.premium_until)>new Date()));
     state.posts=(posts.data||[]).map(x=>({...x,author:x.profiles,likes_count:counts[x.id]||0,created_at:fmtDate(x.created_at)}));
     if(state.user&&state.tab==='Messages')await loadMessages();
   }catch(e){console.warn('ReelPage hydration error',e);}
