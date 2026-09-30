@@ -253,7 +253,7 @@ function boostModalHtml(){
   const type=state.modal?.boostType==='script'?'script':'post';
   return `<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal premium-modal"><button class="modal-close" onclick="closeModal()">${icon('close',19)}</button><div class="eyebrow">${type==='script'?'SCRIPT ADVERTISEMENT':'POST BOOST'}</div><h2>Put your work in front of more creatives.</h2><p>${type==='script'?'Promote your script listing across relevant marketplace surfaces.':'Give your creative update additional visibility in the network.'}</p><div class="premium-list"><b>✦ Prominent placement</b><b>✦ Cinematic sponsored treatment</b><b>✦ Audience reach controls</b><b>✦ Campaign performance reporting</b></div><button class="primary full" onclick="startBoostCheckout()">Set up boost</button><small class="modal-note">Payment and campaign activation require verified payment-provider configuration. No boost is activated until payment is confirmed.</small></div></div>`;
 }
-function startBoostCheckout(){showToast('Boost setup is prepared. Connect the payment provider to activate paid campaigns.');}
+async function startBoostCheckout(){if(!state.user)return openAuth('login');const type=state.modal?.boostType==='script'?'script_boost':state.modal?.boostType==='profile'?'profile_boost':'post_boost';const id=state.modal?.boostId||null;const {data,error}=await sb.functions.invoke('reelpage-payments',{body:{kind:type,entity_id:id}});if(error||!data?.authorization_url){showToast(data?.error||'Payment provider is not configured yet.');return;}window.location.href=data.authorization_url;}
 function postCard(p){
   const a=p.author||{},liked=state.liked.has(p.id);
   const boost=p.author_id===state.user?.id?`<button onclick="openBoost('post','${esc(p.id)}')">✦ Boost</button>`:'';
@@ -516,7 +516,7 @@ async function boot(){
 }
 window.addEventListener('error',e=>console.warn('ReelPage UI error',e.error||e.message));
 window.setTab=setTab;window.openAuth=openAuth;function speakPremiumPitch(){if(window.speechSynthesis){window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Your work deserves to be discovered. ReelPage Pro gives your creative profile a richer presentation, stronger visibility and professional insights for five thousand naira per month.');u.lang='en-NG';u.rate=0.98;window.speechSynthesis.speak(u);}}
-async function startPremiumCheckout(){if(!state.user)return openAuth('signup');showToast('Premium checkout is prepared for ₦5,000/month. Live activation requires verified payment-provider configuration.');}
+async function startPremiumCheckout(){if(!state.user)return openAuth('signup');showToast('Opening secure ReelPage Pro checkout…');const {data,error}=await sb.functions.invoke('reelpage-payments',{body:{kind:'premium'}});if(error||!data?.authorization_url){showToast(data?.error||'Payment provider is not configured yet.');return;}window.location.href=data.authorization_url;}
 function openPremium(){state.modal={type:'premium'};render();}
 window.openCreate=openCreate;window.closeModal=closeModal;window.submitAuth=submitAuth;
 window.followTo=followTo;window.connectTo=connectTo;window.toggleLike=toggleLike;window.showToast=showToast;window.sb=sb;window.openPublicProfile=openPublicProfile;window.setProfileViewTab=setProfileViewTab;window.applyOpportunity=applyOpportunity;window.createPost=createPost;window.createProject=createProject;window.createOpportunity=createOpportunity;
