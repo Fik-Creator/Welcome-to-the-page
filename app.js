@@ -92,7 +92,7 @@ function openAuth(mode='signup'){ state.authMode=mode; state.modal={type:'auth'}
 function closeModal(){ state.modal=null; render(); }
 
 function shell(){
-  const nav=[['Home','home'],['Discover','discover'],['Connect','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Profile','profile']];
+  const nav=[['Home','home'],['Discover','discover'],['Connect','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Opportunities','opportunities'],['Profile','profile']];
   return `<div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-brand">${brand()}</div>
@@ -120,6 +120,7 @@ function page(){
     case 'Projects':return projectsPage();
     case 'Scripts':return scriptsPage();
     case 'Messages':return messagesPage();
+    case 'Opportunities':return opportunitiesPage();
     case 'Connect':return connectPage();
     case 'Profile':return profilePage();
     case 'ProfileView':return publicProfilePage();
