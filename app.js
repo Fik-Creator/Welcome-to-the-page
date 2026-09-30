@@ -38,6 +38,16 @@ const state = {
   premium:false, modal:null, authMode:'signup', loading:false, toast:'', authStatus:'', busyAction:null
 };
 
+// Shared runtime bridge for the modular ReelPage scripts.
+// app.js uses lexical bindings; the feature modules intentionally use window.*.
+window.state = state;
+window.sb = sb;
+window.render = render;
+window.setTab = setTab;
+window.openAuth = openAuth;
+window.closeModal = closeModal;
+window.showToast = showToast;
+
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials = name => String(name||'R').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
 const fmtDate = value => value ? new Date(value).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : 'Now';
