@@ -147,31 +147,23 @@
     };
     r.onresult=e=>{
       let finalText='';
-      let interim='';
       for(let i=e.resultIndex;i<e.results.length;i++){
-        const txt=e.results[i][0]?.transcript?.trim()||'';
-        if(e.results[i].isFinal) finalText+=' '+txt;
-        else interim+=' '+txt;
+        if(e.results[i].isFinal) finalText+=' '+(e.results[i][0]?.transcript||'');
       }
-      const live=(finalText||interim).trim();
-      if(live) {
-        ai.lastTranscript=live;
-        const lower=live.toLowerCase();
-        if(!ai.armed && WAKE.test(live)){
-          const command=live.replace(WAKE,'').trim();
+      finalText=finalText.trim();
+      if(!finalText)return;
+      ai.lastTranscript=finalText;
+      if(!ai.armed){
+        if(WAKE.test(finalText)){
+          const command=finalText.replace(WAKE,'').replace(/^[:,.!?\s-]+/,'').trim();
           ai.armed=true;
-          answer('I am listening.');
-          if(command) {
-            ai.armed=false;
-            runCommand(command);
-          }
-          return;
+          answer(command?'I am listening.':'I am listening. Tell me what you need.');
+          if(command){ai.armed=false;runCommand(command);}
         }
-        if(ai.armed && finalText.trim()){
-          ai.armed=false;
-          runCommand(finalText.trim());
-        }
+        return;
       }
+      ai.armed=false;
+      runCommand(finalText);
     };
     return r;
   }
