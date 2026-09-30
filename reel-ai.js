@@ -219,7 +219,7 @@
         data=(a.data||[]).filter(x=>ids.has(String(x.id))).slice(0,24);
       }
     }else{
-      const filter=`full_name.ilike.%${q}%,username.ilike.%${q}%,role.ilike.%${q}%,headline.ilike.%${q}%,location.ilike.%${q}%`;
+      const filter=`full_name.ilike.%${q}%,username.ilike.%${q}%,role.ilike.%${q}%,headline.ilike.%${q}%,location.ilike.%${q}%,country.ilike.%${q}%`;
       const result=await db.from('profiles').select(fields).or(filter).order('created_at',{ascending:false}).limit(24);
       data=result.data||[];error=result.error;
     }
@@ -322,10 +322,17 @@
     if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
     answer('Let me think about that…',{speak:false});
     try{
-      const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text}});
+      const profile=window.state?.user?{
+        name:window.state.user.full_name,
+        role:window.state.user.role||window.state.user.headline,
+        location:window.state.user.location,
+        skills:window.state.user.skills||[]
+      }:null;
+      const history=ai.history.slice(-9,-1);
+      const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text,history,profile}});
       if(error||!data?.answer){answer(data?.error||'I could not get a full answer right now.');return;}
       answer(data.answer);
-    }catch(_){answer('I can handle ReelPage actions directly. For broader questions, my AI service is not connected yet.');}
+    }catch(_){answer('I can handle ReelPage actions directly. Please try that request again in a moment.');}
   }
 
   async function runCommand(raw){
@@ -366,7 +373,8 @@
       answer('I have not said anything yet.');return;
     }
     if(/\b(?:open|go to|show)\b.*\bnotifications?\b/.test(lower)){window.setTab?.('Notifications');answer('Opening notifications.');return;}
-    if(/\b(?:open|go to|show)\b.*\bnetwork|connections?\b/.test(lower)){window.setTab?.('Network');answer('Opening your network.');return;}
+    if(/\b(?:open|go to|show)\b.*\b(?:network|connections?|connect)\b/.test(lower)){window.setTab?.('Connect');window.loadNetwork?.(window.state?.user?.id);answer('Opening your Connect page.');return;}
+    if(/\b(?:show|open|view)\b.*\b(?:followers|following)\b/.test(lower)){const tab=/following/.test(lower)?'following':'followers';window.openNetwork?.(tab);answer('Opening your '+tab+' list.');return;}
     if(/^(stop|go quiet|stop listening|turn off voice)/.test(lower)){
       ai.listening=false;ai.armed=false;try{ai.recognition?.stop();}catch(_){ }updateUI();answer('Voice listening is off.',{speak:false});return;
     }
@@ -378,6 +386,8 @@
     if(/\b(?:open|go to|show)\b.*\bprojects?\b/.test(lower)){window.setTab?.('Projects');answer('Opening Projects.');return;}
     if(/\b(?:open|go to|show)\b.*\bmessages?\b/.test(lower)){window.setTab?.('Messages');answer('Opening Messages.');return;}
     if(/\b(?:open|go to|show)\b.*\bprofile\b/.test(lower)){window.setTab?.('Profile');answer('Opening your profile.');return;}
+    if(/\b(?:edit|update|change)\b.*\b(?:about|bio|professional story|profile)\b/.test(lower)){window.openCreate?.('profile');answer('Opening your profile editor.');return;}
+    if(/\b(?:sign out|log me out|logout)\b/.test(lower)){window.signOut?.();answer('You are signed out.');return;}
 
     const searchMatch=lower.match(/(?:search|find|look for|show me)\s+(?:for\s+)?(?:an?\s+)?(?:account|accounts|creative|creatives|filmmaker|filmmakers|writer|writers|actor|actors|director|directors|producer|producers|person|people)?\s*(?:named\s+)?(.+)/);
     if(searchMatch){
