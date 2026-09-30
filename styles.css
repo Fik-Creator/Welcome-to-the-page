@@ -114,3 +114,39 @@ select.input{appearance:auto;padding-right:34px;cursor:pointer}.input:focus,sele
 .brand-lockup>.rp-mark{display:none}
 @media(max-width:1100px) and (min-width:721px){.brand-lockup>.rp-mark{display:inline-grid}.sidebar .rp-wordmark{display:none}}
 @media(max-width:720px){.brand-lockup>.rp-mark{display:none}.mobile-logo .rp-wordmark{display:block}}
+
+
+/* ReelPage network + profile polish */
+.profile-avatar{width:132px!important;height:132px!important}
+.person-card .avatar.xl{width:112px!important;height:112px!important}
+.public-avatar{width:132px!important;height:132px!important}
+.identity-row{align-items:flex-end}
+.stats button{background:transparent;color:inherit;padding:0;border:0;cursor:pointer;font:inherit}
+.stats button:hover{color:#fff}
+.network-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.network-summary button{display:flex;flex-direction:column;gap:5px;align-items:flex-start;padding:16px 18px;border:1px solid #17334f;border-radius:15px;background:#091521;color:#7d98ae;text-align:left;cursor:pointer}
+.network-summary button b{font:800 25px Manrope;color:#fff}
+.network-summary button span{font-size:10px}
+.network-summary button.active{border-color:#1687ff;background:linear-gradient(135deg,#0c2238,#09131d);box-shadow:0 10px 35px rgba(22,135,255,.1)}
+.network-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+.network-list{display:grid;gap:2px}
+.network-person{width:100%;display:flex;align-items:center;gap:11px;padding:12px 5px;background:transparent;color:#fff;border:0;border-bottom:1px solid rgba(255,255,255,.05);text-align:left;cursor:pointer}
+.network-person:hover{background:#0c1824}
+.network-person>span:nth-child(2){flex:1;min-width:0}
+.network-person b,.network-person small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.network-person b{font-size:12px}
+.network-person small{font-size:9px;color:#7893aa;margin-top:3px}
+.network-arrow{color:#4aa8ff}
+.network-side{display:grid;gap:16px;align-content:start}
+.network-side h3{margin:5px 0 12px;font:700 15px Manrope}
+.request-row{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.request-actions{display:flex;gap:7px;padding-left:49px;margin-top:-4px;margin-bottom:7px}
+.request-actions .small{min-height:31px;font-size:9px}
+.pdf-upload{display:flex;align-items:center;gap:12px;margin:9px 0;padding:13px;border:1px dashed #2b4c69;border-radius:13px;background:linear-gradient(135deg,rgba(22,135,255,.08),rgba(22,135,255,.02));cursor:pointer}
+.pdf-upload .pdf-badge{display:grid;place-items:center;width:42px;height:42px;border-radius:11px;background:#0d3154;color:#69c7ff;font-size:10px;font-weight:900;letter-spacing:.08em}
+.pdf-upload>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}
+.pdf-upload b{font-size:11px;color:#dcecff}
+.pdf-upload small{font-size:9px;color:#7893aa}
+.pdf-upload input{display:block;margin-top:5px;font-size:9px;color:#9cb7cc}
+@media(max-width:900px){.network-layout{grid-template-columns:1fr}.network-side{grid-template-columns:1fr 1fr}.profile-avatar{width:116px!important;height:116px!important}}
+@media(max-width:720px){.network-summary{grid-template-columns:1fr 1fr 1fr;gap:6px}.network-summary button{padding:12px}.network-summary button b{font-size:20px}.network-layout{grid-template-columns:1fr}.network-side{grid-template-columns:1fr}.profile-avatar{width:104px!important;height:104px!important}.person-card .avatar.xl{width:96px!important;height:96px!important}.public-avatar{width:108px!important;height:108px!important}.identity-row{flex-wrap:wrap}.identity-main{width:calc(100% - 125px)}}
