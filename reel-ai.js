@@ -93,7 +93,7 @@
       </section>`;
     document.body.appendChild(root);
 
-    root.querySelector('#reelAiFab').onclick=()=>setPanel(true);
+    root.querySelector('#reelAiFab').onclick=()=>{setPanel(true);if(!ai.listening)toggleListening();};
     root.querySelector('#reelAiClose').onclick=()=>setPanel(false);
     root.querySelector('#reelAiForm').onsubmit=e=>{
       e.preventDefault();
