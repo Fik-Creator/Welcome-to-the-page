@@ -309,9 +309,22 @@
     }catch(_){answer('I could not complete that ReelPage action right now.');return null;}
   }
 
+  function productKnowledgeAnswer(text){
+    const q=String(text||'').toLowerCase().trim();
+    if(/^(what is|what's|tell me about|explain|describe|what does)\\s+(reelpage|reel page)\\b/.test(q) || /\\bwhat is reelpage about\\b/.test(q)){
+      return 'ReelPage is a professional creative network built for the film and creative industry. It starts with Nigeria and is designed to grow globally. Creatives can build professional profiles, discover actors, writers, directors, producers and crew, connect and message people, publish posts, create projects, find opportunities, buy or list scripts, and use Reel AI to turn ideas into practical production plans. Its core idea is simple: take a creative idea, find the right people, build the production, and move the work toward an audience.';
+    }
+    if(/^(what is|what's|tell me about|explain)\\s+(reel ai|reelai)\\b/.test(q)){
+      return 'Reel AI is the filmmaking and creative-industry copilot inside ReelPage. It can answer creative and general questions, develop story ideas, build production plans, help with scripts, suggest shots and workflows, find people on ReelPage, and trigger supported ReelPage actions when you ask it to.';
+    }
+    if(/\\b(nigerian|nigeria|nollywood)\\b/.test(q) && /reelpage|about|different|special|unique/.test(q)){
+      return 'ReelPage starts from the realities of Nigerian creative work: relationship-driven collaboration, resourceful filmmaking, city-based creative communities and the need to find the missing person or opportunity quickly. Experiences such as Made With What I Have, I Need…, ReelMap and Production Passports are designed around that workflow while remaining useful to creatives anywhere.';
+    }
+    return null;
+  }
+
   async function askServerAI(text){
-    const db=window.sb;
-    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
+    const known=productKnowledgeAnswer(text);\n    if(known){answer(known);return;}\n    const db=window.sb;\n    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
     answer('Let me think about that…',{speak:false});
     try{
       const profile=window.state?.user?{
@@ -322,9 +335,9 @@
       }:null;
       const history=ai.history.slice(-9,-1);
       const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text,history,profile}});
-      if(error||!data?.answer){answer(data?.error||'I could not get a full answer right now.');return;}
+      if(error||!data?.answer){answer(data?.error||'I could not get a full answer right now. Try the same request again.');return;}
       answer(data.answer);
-    }catch(_){answer('I can handle ReelPage actions directly. Please try that request again in a moment.');}
+    }catch(_){answer('I could not reach the Reel AI service just now. Please try that request again.');}
   }
 
   async function runCommand(raw){
