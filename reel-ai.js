@@ -327,20 +327,14 @@
     const known=productKnowledgeAnswer(text);
     if(known){answer(known);return;}
     const db=window.sb;
-    if(!db){answer('Reel AI is still connecting. Please try that again in a moment.');return;}
-    answer('Let me think about that…',{speak:false});
+    if(!db){answer('Reel AI is still connecting. Please try again.');return;}
+    const profile=window.state?.user?{name:window.state.user.full_name,role:window.state.user.role||window.state.user.headline,location:window.state.user.location,skills:window.state.user.skills||[]}:null;
+    const history=ai.history.slice(-9,-1);
     try{
-      const profile=window.state?.user?{
-        name:window.state.user.full_name,
-        role:window.state.user.role||window.state.user.headline,
-        location:window.state.user.location,
-        skills:window.state.user.skills||[]
-      }:null;
-      const history=ai.history.slice(-9,-1);
-      const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text,history,profile}});
-      if(error||!data?.answer){answer(data?.error||'I could not get a full answer right now. Try the same request again.');return;}
+      const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text,history,profile,mode:'execute'}});
+      if(error||!data?.answer){answer(data?.error||'I could not complete that request.');return;}
       answer(data.answer);
-    }catch(_){answer('I could not reach the Reel AI service just now. Please try that request again.');}
+    }catch(_){answer('Reel AI could not reach its service. Try again.');}
   }
 
   async function runCommand(raw){
@@ -370,7 +364,7 @@
       return;
     }
 
-    if(/^help|what can you do|commands/.test(lower)){
+    if(/^(help|what can you do|commands)\??$/.test(lower)){
       askServerAI(text);
 
       return;
