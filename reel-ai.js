@@ -266,8 +266,8 @@
     if(!window.state?.user){window.openAuth?.('login');return;}
     const text=String(body||'').trim();
     if(!text){answer('Tell me what you want the message to say.');return;}
-    const {error}=await window.sb.from('messages').insert({sender_id:window.state.user.id,recipient_id:person.id,body:text});
-    if(error){answer('I could not send that message.');return;}
+    const result=await doAction('message',{target_id:person.id,body:text});
+    if(!result)return;
     window.state.selectedConversation=person.id;
     window.state.tab='Messages';
     if(window.loadMessages)await window.loadMessages();
