@@ -14,7 +14,8 @@
     flow:null,
     lastTranscript:'',
     retryTimer:null,
-    recognitionSupported:!!SpeechRecognition
+    recognitionSupported:!!SpeechRecognition,
+    busy:false
   };
   window.ReelAI = ai;
 
@@ -173,22 +174,83 @@
     try{ai.recognition.start();}catch(_){}
   }
 
+  function buildRecognition(){
+    if(!SpeechRecognition)return null;
+    const r=new SpeechRecognition();
+    r.continuous=false;
+    r.interimResults=true;
+    r.maxAlternatives=1;
+    r.lang='en-NG';
+    r.onstart=()=>{ai.listening=true;updateUI();};
+    r.onresult=(event)=>{
+      let finalText='';
+      for(let i=event.resultIndex;i<event.results.length;i++){
+        const transcript=String(event.results[i][0]?.transcript||'').trim();
+        if(event.results[i].isFinal)finalText+=transcript+' ';
+        else {
+          const input=document.getElementById('reelAiInput');
+          if(input)input.value=transcript;
+        }
+      }
+      finalText=finalText.trim();
+      if(finalText){
+        ai.lastTranscript=finalText;
+        const input=document.getElementById('reelAiInput');
+        if(input)input.value=finalText;
+        const cleaned=finalText.replace(WAKE,'').trim();
+        if(cleaned)runCommand(cleaned);
+      }
+    };
+    r.onerror=(event)=>{
+      ai.listening=false;updateUI();
+      const msg=event?.error==='not-allowed'
+        ? 'Microphone permission is blocked. Allow microphone access for ReelPage and tap the mic again.'
+        : event?.error==='no-speech'
+          ? 'I did not hear you. Tap the mic and speak clearly.'
+          : 'Voice recognition stopped. Tap the mic to try again.';
+      if(event?.error!=='aborted')toast(msg);
+    };
+    r.onend=()=>{
+      ai.listening=false;updateUI();
+      if(ai.armed && !ai.speaking) scheduleRestart(250);
+    };
+    return r;
+  }
+
+  function scheduleRestart(delay=250){
+    clearTimeout(ai.retryTimer);
+    if(!ai.listening || !ai.recognition || ai.speaking)return;
+    ai.retryTimer=setTimeout(()=>{
+      try{ai.recognition.start();}catch(_){}
+    },delay);
+  }
+
+  function safeStart(){
+    if(!ai.recognition || !ai.listening || ai.speaking)return;
+    try{ai.recognition.start();}catch(_){scheduleRestart(500);}
+  }
+
   function toggleListening(){
     if(!SpeechRecognition){
-      answer('Voice recognition is not available in this browser. Try Chrome or Edge on desktop.',{silent:true});
+      answer('Voice input is not supported by this browser. Use a browser with Speech Recognition support.',{silent:true});
       return;
     }
     if(ai.listening){
       ai.listening=false;ai.armed=false;
-      try{ai.recognition.stop();}catch(_){}
+      clearTimeout(ai.retryTimer);
+      try{ai.recognition?.stop();}catch(_){}
       updateUI();
       return;
     }
-    ai.recognition=ai.recognition||buildRecognition();
+    ai.recognition=buildRecognition();
+    ai.armed=true;
     ai.listening=true;
+    setPanel(true);
+    toast('Voice input is ready. Speak your request.');
     updateUI();
     safeStart();
   }
+
 
   async function searchProfiles(term){
     const q=String(term||'').trim().replace(/[,%()]/g,' ').replace(/[.*]/g,' ').replace(/\s+/g,' ').slice(0,80);
