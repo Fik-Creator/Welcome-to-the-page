@@ -17,7 +17,7 @@
     recognitionSupported:!!SpeechRecognition,
     busy:false
   };
-  window.ReelAI = ai;
+  window.ReelAI = ai;\n  window.closeReelAI = closeReelAI;
 
   const escAI = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const speak = (text, opts={}) => {
@@ -39,7 +39,7 @@
     if(window.showToast) window.showToast(message);
   }
 
-  function setPanel(open){
+  function closeReelAI(){\n    setPanel(false);\n    if(ai.listening){ try{ai.recognition?.stop();}catch(_){} ai.listening=false; ai.armed=false; updateUI(); }\n  }\n\n  function setPanel(open){
     const panel=document.getElementById('reelAiPanel');
     if(!panel)return;
     panel.classList.toggle('open',!!open);
@@ -95,7 +95,7 @@
     document.body.appendChild(root);
 
     root.querySelector('#reelAiFab').onclick=()=>{setPanel(true);if(!ai.listening)toggleListening();};
-    root.querySelector('#reelAiClose').onclick=()=>setPanel(false);
+    root.querySelector('#reelAiClose').onclick=closeReelAI;
     root.querySelector('#reelAiForm').onsubmit=e=>{
       e.preventDefault();
       const input=root.querySelector('#reelAiInput');
