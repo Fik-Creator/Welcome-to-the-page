@@ -428,7 +428,12 @@ async function submitAuth(){
   }
   state.loading=true;state.authStatus=state.authMode==='signup'?'Creating your ReelPage…':'Signing you in…';render();
   try{
-    const res=await fetch(AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),20000);
+    let res;
+    try{
+      res=await fetch(AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},body:JSON.stringify(payload),signal:controller.signal});
+    }finally{clearTimeout(timeout);}
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Authentication failed.');
     if(!data.session)throw new Error('No session was returned. Please try again.');
@@ -441,7 +446,8 @@ async function submitAuth(){
     showToast(state.authMode==='signup'?'Account created successfully. Welcome to ReelPage.':'Signed in successfully.');
     void hydrate();
   }catch(e){
-    state.loading=false;state.authStatus='';render();showToast(e.message||'Authentication failed.');
+    state.loading=false;state.authStatus='';render();
+    showToast(e.name==='AbortError'?'ReelPage took too long to respond. Please try again.':(e.message||'Authentication failed.'));
   }
 }
 async function loadUser(){
