@@ -158,6 +158,30 @@ function productionPassportHtml(p){
   return '<div class="backdrop" onclick="if(event.target===this)closeModal()"><div class="modal passport-modal"><button class="modal-close" onclick="closeModal()">'+icon('close',19)+'</button><div class="eyebrow">PRODUCTION PASSPORT</div><h2>'+esc(p.title||'Untitled project')+'</h2><p>One living home for the journey from idea to finished reel.</p><div class="passport-flow"><span>💡 IDEA</span><i>→</i><span>📝 SCRIPT</span><i>→</i><span>🎭 PEOPLE</span><i>→</i><span>🎥 SHOOT</span><i>→</i><span>✂️ POST</span><i>→</i><span>🌍 AUDIENCE</span></div><div class="passport-grid"><div><small>FORMAT</small><b>'+esc(p.format||'Film')+'</b></div><div><small>GENRE</small><b>'+esc(p.genre||'—')+'</b></div><div><small>STATUS</small><b>'+esc(p.status||'In Development')+'</b></div><div><small>CREATIVE OWNER</small><b>'+esc(state.user?.full_name||'ReelPage creator')+'</b></div></div><div class="passport-actions"><button class="secondary" onclick="closeModal();openReelAI();setTimeout(()=>reelAiCommand(\'build a production plan for my project\'),100)">Build with Reel AI</button><button class="primary" onclick="closeModal();openCreate(&quot;opportunity&quot;)">Find collaborators</button></div></div></div>';
 }
 
+const NOLLYWOOD_ICONS = [
+  {name:"Kunle Afolayan",role:"Filmmaker · Producer · Director",tag:"NEW NOLLYWOOD",image:"https://commons.wikimedia.org/wiki/Special:FilePath/Kunle_Afolayan.jpg"},
+  {name:"Richard Mofe-Damijo",role:"Actor · Producer",tag:"VETERAN",image:"https://commons.wikimedia.org/wiki/Special:FilePath/Richard_Mofe-Damijo.png"},
+  {name:"Genevieve Nnaji",role:"Actor · Producer · Director",tag:"VETERAN",image:"https://commons.wikimedia.org/wiki/Special:FilePath/Genevieve_.jpg"},
+  {name:"Joke Silva",role:"Actor · Director · Mentor",tag:"VETERAN",image:"https://commons.wikimedia.org/wiki/Special:FilePath/Joke_Silva_(cropped).jpg"}
+];
+
+function nollywoodHomeHtml(){
+  return `<section class="nollywood-home surface">
+    <div class="nollywood-copy">
+      <div class="eyebrow">MADE FOR NOLLYWOOD</div>
+      <h2>From Surulere to Abeokuta, <span>your people are here.</span></h2>
+      <p>ReelPage starts where Nigerian creatives already create: on the street, on set, in rehearsal rooms, living rooms and wherever somebody says, "I get one idea."</p>
+      <div class="naija-chips"><span>🎬 Film people</span><span>📍 Lagos · Ogun · Abuja</span><span>🤝 Find crew</span><span>📜 Find stories</span></div>
+    </div>
+    <div class="nollywood-visual"><div class="nollywood-sign">NO<br><b>LLY</b><br>WOOD</div><div class="nollywood-road">●  →  ●  →  ●</div></div>
+  </section>
+  <section class="industry-wall">
+    <div class="section-head compact"><div><div class="eyebrow">THE INDUSTRY WALL</div><h2>Faces that built the road.</h2><p>Learn from the people who helped shape Nigerian screen culture.</p></div><button class="text-btn" onclick="setTab('Discover')">Meet today's creatives ${icon('arrow',15)}</button></div>
+    <div class="icon-wall">${NOLLYWOOD_ICONS.map(p=>`<article class="icon-card"><div class="icon-photo"><img loading="lazy" src="${p.image}" alt="${esc(p.name)}" onerror="this.style.display='none'"><span>${esc(p.tag)}</span></div><div class="icon-card-body"><strong>${esc(p.name)}</strong><small>${esc(p.role)}</small><em>Industry inspiration</em></div></article>`).join('')}</div>
+    <div class="icon-note">Images are presented from publicly documented sources and open-licence Wikimedia files where available; this editorial wall does not imply endorsement.</div>
+  </section>`;
+}
+
 function homePage(){
   const feed=state.posts.length?state.posts:demoPosts();
   return `<div class="home-hero">
@@ -170,6 +194,7 @@ function homePage(){
     <div class="hero-visual"><div class="halo"></div><div class="hero-tile">${logoMark('lg')}<strong>REEL<span>PAGE</span></strong><small>THE CREATIVE NETWORK</small></div><div class="float-card card-a"><b>Open opportunity</b><small>Casting · Lagos</small></div><div class="float-card card-b"><b>Made with what I have</b><small>iPhone · 3 actors · 1 location</small></div></div>
   </div>
   ${creativeWorldHtml()}
+  ${nollywoodHomeHtml()}
   <div class="section-head"><div><div class="eyebrow">THE NETWORK</div><h2>People you may want to know</h2><p>Find collaborators by craft, city, skill or ambition.</p></div><button class="text-btn" onclick="setTab('Discover')">Explore all ${icon('arrow',15)}</button></div>
   <div class="people-grid">${state.profiles.slice(0,4).map(profileCard).join('')}</div>
   <div class="home-columns">
