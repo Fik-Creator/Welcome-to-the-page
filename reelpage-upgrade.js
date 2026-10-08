@@ -65,3 +65,25 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,250));else setTimeout(install,250);
 })();
+  // Cinematic SPA motion: use native View Transitions where available, while keeping
+  // navigation instant on browsers that do not support it.
+  function installWorldMotion(){
+    if(window.__rpWorldMotion)return;
+    window.__rpWorldMotion=true;
+    const root=document.getElementById('app');
+    if(!root)return;
+    root.style.viewTransitionName='reelpage-app';
+    const originalSetTab=window.setTab;
+    if(typeof originalSetTab==='function'){
+      window.setTab=function(tab){
+        const go=()=>originalSetTab(tab);
+        if(document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+          try{document.startViewTransition(go);return;}catch(_){}
+        }
+        go();
+      };
+    }
+    requestAnimationFrame(()=>document.body.classList.add('rp-world-ready'));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(installWorldMotion,300));
+  else setTimeout(installWorldMotion,300);
