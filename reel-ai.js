@@ -17,7 +17,8 @@
     recognitionSupported:!!SpeechRecognition,
     busy:false
   };
-  window.ReelAI = ai;\n  window.closeReelAI = closeReelAI;\n  window.closeReelAI = closeReelAI;
+  window.ReelAI = ai;
+  window.closeReelAI = closeReelAI;
 
   const escAI = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const speak = (text, opts={}) => {
@@ -39,7 +40,14 @@
     if(window.showToast) window.showToast(message);
   }
 
-  function closeReelAI(){\n    setPanel(false);\n    if(ai.listening){ try{ai.recognition?.stop();}catch(_){} ai.listening=false; ai.armed=false; updateUI(); }\n  }\n\n  function closeReelAI(){ setPanel(false); if(ai.listening){ try{ai.recognition?.stop();}catch(_){} ai.listening=false; ai.armed=false; updateUI(); } }\n\n  function setPanel(open){
+  function closeReelAI(){
+    setPanel(false);
+    if(ai.listening){ try{ai.recognition?.stop();}catch(_){} ai.listening=false; ai.armed=false; updateUI(); }
+  }
+
+  function closeReelAI(){ setPanel(false); if(ai.listening){ try{ai.recognition?.stop();}catch(_){} ai.listening=false; ai.armed=false; updateUI(); } }
+
+  function setPanel(open){
     const panel=document.getElementById('reelAiPanel');
     if(!panel)return;
     panel.classList.toggle('open',!!open);
