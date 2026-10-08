@@ -253,31 +253,17 @@ function opportunitiesPage(){
 
 
 function messagesPage(){
-  if(!state.user)return `<div class="empty-state big">${logoMark('lg')}<div class="eyebrow">MESSAGING</div><h1>Your creative inbox.</h1><p>Sign in to message collaborators and keep project conversations in one place.</p><button class="primary" onclick="openAuth('login')">Sign in to messages</button></div>`;
+  if(!state.user)return '<div class="empty-state big">'+logoMark('lg')+'<div class="eyebrow">MESSAGING</div><h1>Your creative inbox.</h1><p>Sign in to message collaborators and keep project conversations in one place.</p><button class="primary" onclick="openAuth(\'login\')">Sign in to messages</button></div>';
   const q=String(state.messageSearch||'').toLowerCase().trim();
-  const people=state.profiles.filter(p=>p.id!==state.user.id).filter(p=>{
-    const hay=[p.full_name,p.username,p.headline,p.role,p.location,countryDisplay(p.country),(p.skills||[]).join(' ')].filter(Boolean).join(' ').toLowerCase();
-    return !q||hay.includes(q);
-  });
-  const selected=people.find(p=>String(p.id)===String(state.selectedConversation))||people[0];
+  const people=state.profiles.filter(function(p){if(p.id===state.user.id)return false;const hay=[p.full_name,p.username,p.headline,p.role,p.location,countryDisplay(p.country),(p.skills||[]).join(' ')].filter(Boolean).join(' ').toLowerCase();return !q||hay.includes(q);});
+  const selected=people.find(function(p){return String(p.id)===String(state.selectedConversation);})||people[0];
   if(selected&&!state.selectedConversation)state.selectedConversation=selected.id;
-  const msgs=selected?state.messages.filter(m=>(String(m.sender_id)===String(state.user.id)&&String(m.recipient_id)===String(selected.id))||(String(m.sender_id)===String(selected.id)&&String(m.recipient_id)===String(state.user.id))):[];
-  const rows=people.map(p=>`<button class="conversation ${String(selected?.id)===String(p.id)?'active':''}" onclick="state.selectedConversation='${esc(p.id)}';loadMessages();render()">${avatar(p,'sm')}<span><b>${esc(p.full_name)}</b><small>${esc(p.headline||p.role||'Creative')} · ${esc(profilePlace(p))}</small></span></button>`).join('');
-  return `<div class="messages-page">
-    <div class="messages-header"><div><div class="eyebrow">PRIVATE MESSAGES</div><h1>Your creative conversations.</h1><p>Connect professionally, then take the conversation into a private space.</p></div><button class="secondary" onclick="setTab('Connect')">${icon('discover',15)} My network</button></div>
-    <div class="message-layout">
-      <aside class="conversation-panel">
-        <div class="message-search">${icon('search',17)}<input value="${esc(state.messageSearch||'')}" oninput="state.messageSearch=this.value;render()" placeholder="Search people..." aria-label="Search people in messages"></div>
-        <div class="conversation-label"><span>PEOPLE</span><small>${people.length} found</small></div>
-        <div class="conversation-list">${rows||'<div class="empty-state"><p>No people match your search.</p><small>Try a name, role, skill or location.</small></div>'}</div>
-      </aside>
-      <section class="chat">
-        <div class="chat-head">${selected?avatar(selected,'sm'):'<span></span>'}<div><b>${esc(selected?.full_name||'Select a creative')}</b><small>${esc(selected?selected.headline||selected.role||'Creative':'Search for someone to message')}</small></div>${selected?'<button class="chat-profile-btn" onclick="openPublicProfile(\''+esc(selected.id)+'\')">View profile</button>':''}</div>
-        <div class="chat-body">${msgs.length?msgs.map(m=>`<div class="bubble ${String(m.sender_id)===String(state.user.id)?'mine':''}">${esc(m.body)}<small>${fmtDate(m.created_at)}</small></div>`).join(''):'<div class="chat-empty"><div class="chat-empty-icon">'+icon('messages',25)+'</div><b>${selected?'Start the conversation':'Find a creative to message'}</b><p>${selected?'Introduce yourself, discuss a project, or explore a collaboration.':'Use the search above to find someone on ReelPage.'}</p></div>'}</div>
-        ${selected?'<form class="chat-form" onsubmit="sendMessage(event)"><input id="messageBody" autocomplete="off" placeholder="Write a professional message..."><button class="primary" type="submit" aria-label="Send message">'+icon('send',16)+'</button></form>':''}
-      </section>
-    </div>
-  </div>`;
+  const msgs=selected?state.messages.filter(function(m){return (String(m.sender_id)===String(state.user.id)&&String(m.recipient_id)===String(selected.id))||(String(m.sender_id)===String(selected.id)&&String(m.recipient_id)===String(state.user.id));}):[];
+  const rows=people.map(function(p){const active=selected&&String(selected.id)===String(p.id)?' active':'';return '<button class="conversation'+active+'" onclick="state.selectedConversation=\''+esc(p.id)+'\';loadMessages();render()">'+avatar(p,'sm')+'<span><b>'+esc(p.full_name)+'</b><small>'+esc(p.headline||p.role||'Creative')+' · '+esc(profilePlace(p))+'</small></span></button>';}).join('');
+  const messageRows=msgs.length?msgs.map(function(m){return '<div class="bubble '+(String(m.sender_id)===String(state.user.id)?'mine':'')+'">'+esc(m.body)+'<small>'+fmtDate(m.created_at)+'</small></div>';}).join(''):'<div class="chat-empty"><div class="chat-empty-icon">'+icon('messages',25)+'</div><b>'+(selected?'Start the conversation':'Find a creative to message')+'</b><p>'+(selected?'Introduce yourself, discuss a project, or explore a collaboration.':'Use the search above to find someone on ReelPage.')+'</p></div>';
+  const header=selected?avatar(selected,'sm')+'<div><b>'+esc(selected.full_name)+'</b><small>'+esc(selected.headline||selected.role||'Creative')+'</small></div><button class="chat-profile-btn" onclick="openPublicProfile(\''+esc(selected.id)+'\')">View profile</button>':'<span></span><div><b>Select a creative</b><small>Search for someone to message</small></div>';
+  const form=selected?'<form class="chat-form" onsubmit="sendMessage(event)"><input id="messageBody" autocomplete="off" placeholder="Write a professional message..."><button class="primary" type="submit" aria-label="Send">'+icon('send',16)+'</button></form>':'';
+  return '<div class="messages-page"><div class="messages-header"><div><div class="eyebrow">PRIVATE MESSAGES</div><h1>Your creative conversations.</h1><p>Connect professionally, then take the conversation into a private space.</p></div><button class="secondary" onclick="setTab(\'Connect\')">'+icon('discover',15)+' My network</button></div><div class="message-layout"><aside class="conversation-panel"><div class="message-search">'+icon('search',17)+'<input value="'+esc(state.messageSearch||'')+'" oninput="state.messageSearch=this.value;render()" placeholder="Search people..." aria-label="Search people in messages"></div><div class="conversation-label"><span>PEOPLE</span><small>'+people.length+' found</small></div><div class="conversation-list">'+(rows||'<div class="empty-state"><p>No people match your search.</p><small>Try a name, role, skill or location.</small></div>')+'</div></aside><section class="chat"><div class="chat-head">'+header+'</div><div class="chat-body">'+messageRows+'</div>'+form+'</section></div></div>';
 }
 
 function openNetwork(tab='connections',profileId=null){
