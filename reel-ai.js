@@ -395,6 +395,16 @@
     try{
       const {data,error}=await db.functions.invoke('reelpage-ai',{body:{message:text,history,profile,mode:'execute'}});
       if(error||!data?.answer){answer(data?.error||'I could not complete that request.');return;}
+      if(Array.isArray(data.executed)){
+        for(const action of data.executed){
+          if(action?.ok && action.destination){
+            window.setTab?.(action.destination);
+          }
+        }
+        if(data.executed.some(x=>x?.ok && ['create_post','create_project','create_opportunity','follow','connect','send_message','update_profile'].includes(x.action))){
+          await window.hydrate?.();
+        }
+      }
       answer(data.answer);
     }catch(_){answer('Reel AI could not reach its service. Try again.');}
   }
