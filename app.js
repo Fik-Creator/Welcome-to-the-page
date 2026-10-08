@@ -31,7 +31,7 @@ const DEMO_SCRIPTS = [
 ];
 
 const state = {
-  tab:'Home', search:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
+  tab:'Home', search:'', messageSearch:'', user:null, profiles:DEMO.profiles.slice(), projects:DEMO.projects.slice(),
   opps:DEMO.opps.slice(), scripts:[], posts:[], liked:new Set(), following:new Set(), messages:[],
   selectedPerson:null, viewedProfileId:null, profileViewTab:'About', selectedConversation:null,
   network:{followers:[],following:[],connections:[],incoming:[],outgoing:[]}, networkTab:'connections', networkProfileId:null, networkLoading:false,
@@ -94,7 +94,7 @@ function avatar(user,cls=''){
 let searchTimer=null;
 function queueSearch(value){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=value;render();},180);}
 function setTab(tab){
-  const routeAliases={Discover:'Jobs',Scripts:'Jobs',Projects:'Jobs',Opportunities:'Jobs',Messages:'Connect'};
+  const routeAliases={Discover:'Jobs',Scripts:'Jobs',Projects:'Jobs',Opportunities:'Jobs'};
   tab=routeAliases[tab]||tab;
   state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null;
   render();
@@ -123,7 +123,7 @@ function shell(){
       <header class="topbar">
         <div class="mobile-logo">${brand(true)}</div>
         <div class="searchbox">${icon('search',17)}<input value="${esc(state.search)}" oninput="queueSearch(this.value)" placeholder="Search filmmakers, scripts, projects..." aria-label="Search ReelPage"></div>
-        <div class="top-actions"><button class="icon-btn" aria-label="Notifications" onclick="showToast('Notifications are ready for your ReelPage account.')">${icon('bell',18)}</button>${state.user?'<button class="profile-chip" onclick="setTab(\'Profile\')">'+avatar(state.user,'xs')+'<span>'+esc(state.user.full_name||'You')+'</span></button>':'<button class="sign-btn" onclick="openAuth(\'login\')">Sign in</button>'}</div>
+        <div class="top-actions">${state.user?'<button class="icon-btn message-top-btn" aria-label="Messages" title="Messages" onclick="setTab(\'Messages\')">'+icon('messages',19)+'</button>':''}<button class="icon-btn" aria-label="Notifications" onclick="showToast('Notifications are ready for your ReelPage account.')">${icon('bell',18)}</button>${state.user?'<button class="profile-chip" onclick="setTab(\'Profile\')">'+avatar(state.user,'xs')+'<span>'+esc(state.user.full_name||'You')+'</span></button>':'<button class="sign-btn" onclick="openAuth(\'login\')">Sign in</button>'}</div>
       </header>
       <section class="content">${page()}</section>
     </main>
@@ -134,6 +134,7 @@ function shell(){
 function page(){
   switch(state.tab){
     case 'Connect':return connectPage();
+    case 'Messages':return messagesPage();
     case 'Jobs':return jobsPage();
     case 'Profile':return profilePage();
     case 'ProfileView':return publicProfilePage();
@@ -253,13 +254,31 @@ function opportunitiesPage(){
 
 function messagesPage(){
   if(!state.user)return `<div class="empty-state big">${logoMark('lg')}<div class="eyebrow">MESSAGING</div><h1>Your creative inbox.</h1><p>Sign in to message collaborators and keep project conversations in one place.</p><button class="primary" onclick="openAuth('login')">Sign in to messages</button></div>`;
-  const people=state.profiles.filter(p=>p.id!==state.user.id);
-  const selected=people.find(p=>p.id===state.selectedConversation)||people[0];
-  const msgs=selected?state.messages.filter(m=>(m.sender_id===state.user.id&&m.recipient_id===selected.id)||(m.sender_id===selected.id&&m.recipient_id===state.user.id)):[],
-    rows=people.map(p=>`<button class="conversation ${selected?.id===p.id?'active':''}" onclick="state.selectedConversation='${p.id}';loadMessages();render()">${avatar(p,'sm')}<span><b>${esc(p.full_name)}</b><small>${esc(p.headline||'Creative')}</small></span></button>`).join('');
-  return `<div class="page-title"><div><div class="eyebrow">MESSAGES</div><h1>Make the connection count.</h1><p>Private project conversations belong here.</p></div></div><div class="message-layout"><div class="conversation-list">${rows||'<div class="empty-state">No other creatives yet.</div>'}</div><div class="chat"><div class="chat-head">${selected?avatar(selected,'sm'):'<span></span>'}<div><b>${esc(selected?.full_name||'Select a creative')}</b><small>${esc(selected?.headline||'')}</small></div></div><div class="chat-body">${msgs.length?msgs.map(m=>`<div class="bubble ${m.sender_id===state.user.id?'mine':''}">${esc(m.body)}<small>${fmtDate(m.created_at)}</small></div>`).join(''):'<div class="empty-state"><p>Start a professional conversation.</p></div>'}</div>${selected?'<form class="chat-form" onsubmit="sendMessage(event)"><input id="messageBody" placeholder="Write a message..."><button class="primary" type="submit">'+icon('send',16)+'</button></form>':''}</div></div>`;
+  const q=String(state.messageSearch||'').toLowerCase().trim();
+  const people=state.profiles.filter(p=>p.id!==state.user.id).filter(p=>{
+    const hay=[p.full_name,p.username,p.headline,p.role,p.location,countryDisplay(p.country),(p.skills||[]).join(' ')].filter(Boolean).join(' ').toLowerCase();
+    return !q||hay.includes(q);
+  });
+  const selected=people.find(p=>String(p.id)===String(state.selectedConversation))||state.profiles.find(p=>String(p.id)===String(state.selectedConversation)&&String(p.id)!==String(state.user.id))||people[0];
+  if(selected&&!state.selectedConversation)state.selectedConversation=selected.id;
+  const msgs=selected?state.messages.filter(m=>(String(m.sender_id)===String(state.user.id)&&String(m.recipient_id)===String(selected.id))||(String(m.sender_id)===String(selected.id)&&String(m.recipient_id)===String(state.user.id))):[];
+  const rows=people.map(p=>`<button class="conversation ${String(selected?.id)===String(p.id)?'active':''}" onclick="state.selectedConversation='${esc(p.id)}';loadMessages();render()">${avatar(p,'sm')}<span><b>${esc(p.full_name)}</b><small>${esc(p.headline||p.role||'Creative')} · ${esc(profilePlace(p))}</small></span></button>`).join('');
+  return `<div class="messages-page">
+    <div class="messages-header"><div><div class="eyebrow">PRIVATE MESSAGES</div><h1>Your creative conversations.</h1><p>Connect professionally, then take the conversation into a private space.</p></div><button class="secondary" onclick="setTab('Connect')">${icon('discover',15)} My network</button></div>
+    <div class="message-layout">
+      <aside class="conversation-panel">
+        <div class="message-search">${icon('search',17)}<input value="${esc(state.messageSearch||'')}" oninput="state.messageSearch=this.value;render()" placeholder="Search people..." aria-label="Search people in messages"></div>
+        <div class="conversation-label"><span>PEOPLE</span><small>${people.length} found</small></div>
+        <div class="conversation-list">${rows||'<div class="empty-state"><p>No people match your search.</p><small>Try a name, role, skill or location.</small></div>'}</div>
+      </aside>
+      <section class="chat">
+        <div class="chat-head">${selected?avatar(selected,'sm'):'<span></span>'}<div><b>${esc(selected?.full_name||'Select a creative')}</b><small>${esc(selected?selected.headline||selected.role||'Creative':'Search for someone to message')}</small></div>${selected?'<button class="chat-profile-btn" onclick="openPublicProfile(\''+esc(selected.id)+'\')">View profile</button>':''}</div>
+        <div class="chat-body">${msgs.length?msgs.map(m=>`<div class="bubble ${String(m.sender_id)===String(state.user.id)?'mine':''}">${esc(m.body)}<small>${fmtDate(m.created_at)}</small></div>`).join(''):'<div class="chat-empty"><div class="chat-empty-icon">'+icon('messages',25)+'</div><b>${selected?'Start the conversation':'Find a creative to message'}</b><p>${selected?'Introduce yourself, discuss a project, or explore a collaboration.':'Use the search above to find someone on ReelPage.'}</p></div>'}</div>
+        ${selected?'<form class="chat-form" onsubmit="sendMessage(event)"><input id="messageBody" autocomplete="off" placeholder="Write a professional message..."><button class="primary" type="submit" aria-label="Send message">'+icon('send',16)+'</button></form>':''}
+      </section>
+    </div>
+  </div>`;
 }
-
 
 function openNetwork(tab='connections',profileId=null){
   state.networkTab=tab;
