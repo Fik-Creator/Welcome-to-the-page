@@ -94,7 +94,7 @@ function avatar(user,cls=''){
 let searchTimer=null;
 function queueSearch(value){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=value;render();},180);}
 function setTab(tab){
-  const routeAliases={Discover:'Jobs',Scripts:'Jobs',Projects:'Jobs',Opportunities:'Jobs'};
+  const routeAliases={Discover:'Connect',Scripts:'Jobs',Projects:'Jobs',Opportunities:'Jobs'};
   tab=routeAliases[tab]||tab;
   state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null;
   render();
@@ -259,7 +259,7 @@ function messagesPage(){
     const hay=[p.full_name,p.username,p.headline,p.role,p.location,countryDisplay(p.country),(p.skills||[]).join(' ')].filter(Boolean).join(' ').toLowerCase();
     return !q||hay.includes(q);
   });
-  const selected=people.find(p=>String(p.id)===String(state.selectedConversation))||state.profiles.find(p=>String(p.id)===String(state.selectedConversation)&&String(p.id)!==String(state.user.id))||people[0];
+  const selected=people.find(p=>String(p.id)===String(state.selectedConversation))||people[0];
   if(selected&&!state.selectedConversation)state.selectedConversation=selected.id;
   const msgs=selected?state.messages.filter(m=>(String(m.sender_id)===String(state.user.id)&&String(m.recipient_id)===String(selected.id))||(String(m.sender_id)===String(selected.id)&&String(m.recipient_id)===String(state.user.id))):[];
   const rows=people.map(p=>`<button class="conversation ${String(selected?.id)===String(p.id)?'active':''}" onclick="state.selectedConversation='${esc(p.id)}';loadMessages();render()">${avatar(p,'sm')}<span><b>${esc(p.full_name)}</b><small>${esc(p.headline||p.role||'Creative')} · ${esc(profilePlace(p))}</small></span></button>`).join('');
