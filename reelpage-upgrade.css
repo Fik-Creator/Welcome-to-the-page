@@ -1,1 +1,59 @@
 .rp-upgrade-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(2,8,18,.78);backdrop-filter:blur(14px);display:grid;place-items:center;padding:20px}.rp-upgrade-modal{position:relative;width:min(760px,96vw);max-height:90vh;overflow:auto;background:#0b1727;border:1px solid rgba(88,166,255,.22);border-radius:24px;padding:30px;box-shadow:0 30px 90px rgba(0,0,0,.5);color:#eaf4ff}.rp-upgrade-modal h2{font:800 32px Manrope;margin:8px 0}.rp-upgrade-modal p{color:#91a7bb}.rp-x{position:absolute;right:18px;top:16px;background:none;border:0;color:#9eb3c7;font-size:28px;cursor:pointer}.rp-eyebrow{font-size:11px;letter-spacing:.16em;color:#4da3ff;font-weight:800}.rp-city-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}.rp-city{background:#0f2135;border:1px solid #1c3854;border-radius:15px;padding:16px;text-align:left;color:#eaf4ff;cursor:pointer}.rp-city:hover,.rp-notification:hover,.rp-match:hover{border-color:#4da3ff;transform:translateY(-1px)}.rp-city strong,.rp-city span{display:block}.rp-city span{font-size:12px;color:#7890a7;margin-top:5px}.rp-map-results{border-top:1px solid #1b3046;padding-top:18px}.rp-result-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}.rp-result-columns>b,.rp-result-columns div>b{display:block;font-size:11px;letter-spacing:.12em;color:#6f8aa4;margin-bottom:8px}.rp-result-columns button{display:block;width:100%;padding:9px;background:none;border:0;border-bottom:1px solid #152a40;color:#d9e7f4;text-align:left;cursor:pointer}.rp-notification-list{display:grid;gap:8px;margin-top:18px}.rp-notification{display:flex;gap:12px;width:100%;text-align:left;background:#0e2033;border:1px solid #18334d;border-radius:14px;padding:14px;color:#eaf4ff;cursor:pointer}.rp-notification p{margin:4px 0;font-size:13px}.rp-notification small{color:#6f879e}.rp-dot{width:7px;height:7px;border-radius:50%;background:#4da3ff;margin-top:7px;flex:0 0 auto}.rp-dot.read{background:#31465b}.rp-empty{padding:35px;text-align:center;color:#7890a7}.rp-form{display:grid;gap:11px;margin-top:20px}.rp-form input,.rp-form select,.rp-form textarea,.rp-pass-grid input,.rp-pass-grid textarea,.rp-passport textarea{width:100%;box-sizing:border-box;background:#081321;color:#eaf4ff;border:1px solid #1d3954;border-radius:11px;padding:12px;font:inherit}.rp-form textarea,.rp-pass-grid textarea{min-height:90px;resize:vertical}.rp-form label{font-size:13px;color:#91a7bb}.rp-form label input{width:auto}.rp-match{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:8px;padding:13px;background:#0d1d2f;border:1px solid #19344e;border-radius:12px;color:#eaf4ff;text-align:left;cursor:pointer}.rp-match small{display:block;color:#7890a7;margin-top:3px}.rp-match strong{color:#55b3ff}.rp-passport{width:min(900px,96vw)}.rp-passport-tabs{display:flex;gap:7px;overflow:auto;border-bottom:1px solid #19334d;margin:22px 0}.rp-passport-tabs button{background:none;border:0;color:#7890a7;padding:10px 13px;cursor:pointer;white-space:nowrap}.rp-passport-tabs button.active{color:#fff;border-bottom:2px solid #4da3ff}.rp-pass-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}.rp-pass-grid label{font-size:11px;color:#7f98ad;text-transform:uppercase;letter-spacing:.08em}.rp-pass-grid label textarea,.rp-pass-grid label input{margin-top:7px;text-transform:none;font-size:14px}.rp-pass-grid .full{grid-column:1/-1}.rp-section{padding:25px 0}.rp-passport .primary,.rp-passport .secondary{margin-right:8px;margin-top:8px}.rp-section textarea{min-height:150px;margin:12px 0}.rp-upgrade-modal .primary{background:#4da3ff;color:#04101c;border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}.rp-upgrade-modal .secondary{background:#102338;color:#dcecff;border:1px solid #244461;border-radius:10px;padding:10px 15px;font-weight:700;cursor:pointer}@media(max-width:650px){.rp-city-grid{grid-template-columns:1fr 1fr}.rp-result-columns,.rp-pass-grid{grid-template-columns:1fr}.rp-pass-grid .full{grid-column:auto}.rp-upgrade-modal{padding:22px}.rp-upgrade-modal h2{font-size:26px}}
+/* REELPAGE WORLD MOTION SYSTEM — cinematic, lightweight, mobile-safe */
+:root{
+  --rp-ease:cubic-bezier(.22,1,.36,1);
+  --rp-fast:180ms;
+  --rp-med:420ms;
+}
+html{scroll-behavior:smooth}
+body{overflow-x:hidden}
+.app-shell{animation:rpWorldIn .65s var(--rp-ease) both}
+.main{position:relative;isolation:isolate}
+.main::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:
+ radial-gradient(650px 420px at 72% 8%,rgba(27,126,255,.10),transparent 70%),
+ radial-gradient(520px 360px at 12% 72%,rgba(35,190,255,.055),transparent 72%)}
+.sidebar{transition:background var(--rp-med) var(--rp-ease),border-color var(--rp-med) var(--rp-ease)}
+.nav-item{position:relative;transition:transform var(--rp-fast) var(--rp-ease),background var(--rp-fast) ease,color var(--rp-fast) ease}
+.nav-item::after{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 4px 4px 0;background:linear-gradient(180deg,#35c4ff,#1687ff);transform:scaleY(0);transition:transform var(--rp-fast) var(--rp-ease)}
+.nav-item:hover{transform:translateX(3px)}
+.nav-item.active::after{transform:scaleY(1)}
+.topbar{backdrop-filter:blur(18px);transition:background var(--rp-med) ease}
+.searchbox{transition:border-color var(--rp-fast) ease,box-shadow var(--rp-fast) ease,transform var(--rp-fast) var(--rp-ease)}
+.searchbox:focus-within{transform:translateY(-1px);box-shadow:0 10px 35px rgba(0,0,0,.18),0 0 0 3px rgba(53,196,255,.07)}
+.world-card,.icon-card,.person-card,.project-card,.opportunity-card,.post-card,.surface{
+  transition:transform var(--rp-med) var(--rp-ease),border-color var(--rp-med) ease,box-shadow var(--rp-med) ease;
+}
+.world-card:hover,.icon-card:hover,.person-card:hover,.project-card:hover,.opportunity-card:hover,.post-card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 22px 55px rgba(0,0,0,.24),0 0 0 1px rgba(53,196,255,.10);
+}
+.world-card:active,.person-card:active,.project-card:active,.opportunity-card:active{transform:translateY(-1px) scale(.995)}
+.nollywood-visual{animation:rpFloat 7s ease-in-out infinite}
+.nollywood-sign{animation:rpSign 4.5s ease-in-out infinite}
+.nollywood-road{animation:rpRoad 9s linear infinite}
+.icon-photo img,.avatar img{transition:transform .7s var(--rp-ease),filter .7s ease}
+.icon-card:hover .icon-photo img,.person-card:hover .avatar img{transform:scale(1.045);filter:saturate(1.08)}
+button,.nav-item,.icon-btn,.profile-chip{touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid rgba(53,196,255,.72);outline-offset:3px
+}
+.toast{animation:rpToast .42s var(--rp-ease) both}
+.rp-upgrade-backdrop{animation:rpFade .22s ease both}
+.rp-upgrade-modal{animation:rpModal .48s var(--rp-ease) both}
+.rp-city,.rp-notification,.rp-match{transition:transform var(--rp-fast) var(--rp-ease),border-color var(--rp-fast) ease,background var(--rp-fast) ease}
+.rp-city:hover,.rp-notification:hover,.rp-match:hover{transform:translateY(-3px)}
+@keyframes rpWorldIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes rpFade{from{opacity:0}to{opacity:1}}
+@keyframes rpModal{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes rpToast{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes rpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes rpSign{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg) translateY(-2px)}}
+@keyframes rpRoad{from{transform:translateX(-14px);opacity:.65}50%{opacity:1}to{transform:translateX(14px);opacity:.65}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+@media(max-width:700px){
+  .main::before{background:radial-gradient(360px 260px at 70% 4%,rgba(27,126,255,.08),transparent 72%)}
+  .world-card:hover,.icon-card:hover,.person-card:hover,.project-card:hover,.opportunity-card:hover,.post-card:hover{transform:none}
+}
