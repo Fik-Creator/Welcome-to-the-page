@@ -93,7 +93,14 @@ function avatar(user,cls=''){
 
 let searchTimer=null;
 function queueSearch(value){clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.search=value;render();},180);}
-function setTab(tab){ state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null; render(); if(tab==='Connect'&&state.user)void loadNetwork(state.user.id); window.scrollTo({top:0,behavior:'smooth'}); }
+function setTab(tab){
+  const routeAliases={Discover:'Jobs',Scripts:'Jobs',Projects:'Jobs',Opportunities:'Jobs',Messages:'Connect'};
+  tab=routeAliases[tab]||tab;
+  state.tab=tab; state.selectedPerson=null; state.viewedProfileId=null;
+  render();
+  if(tab==='Connect'&&state.user)void loadNetwork(state.user.id);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 function openPublicProfile(id){ state.viewedProfileId=id; state.profileViewTab='About'; state.tab='ProfileView'; state.selectedPerson=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function setProfileViewTab(tab){ state.profileViewTab=tab; render(); }
 function showToast(message){ state.toast=message; render(); clearTimeout(window.__rpToast); window.__rpToast=setTimeout(()=>{state.toast='';render()},2800); }
@@ -101,7 +108,7 @@ function openAuth(mode='signup'){ state.authMode=mode; state.modal={type:'auth'}
 function closeModal(){ state.modal=null; render(); }
 
 function shell(){
-  const nav=[['Home','home'],['Discover','discover'],['Connect','discover'],['Scripts','scripts'],['Projects','projects'],['Messages','messages'],['Opportunities','opportunities'],['Profile','profile']];
+  const nav=[['Home','home'],['Connect','discover'],['Jobs','projects'],['Profile','profile']];
   return `<div class="app-shell">
     <aside class="sidebar">
       <div class="sidebar-brand">${brand()}</div>
@@ -126,17 +133,26 @@ function shell(){
 
 function page(){
   switch(state.tab){
-    case 'Discover':return discoverPage();
-    case 'Projects':return projectsPage();
-    case 'Scripts':return scriptsPage();
-    case 'Messages':return messagesPage();
-    case 'Opportunities':return opportunitiesPage();
     case 'Connect':return connectPage();
+    case 'Jobs':return jobsPage();
     case 'Profile':return profilePage();
     case 'ProfileView':return publicProfilePage();
     default:return homePage();
   }
 }
+function jobsPage(){
+  return '<div class="jobs-world">'+
+    '<div class="jobs-hero surface"><div><div class="eyebrow">THE CREATIVE MARKETPLACE</div><h1>Find the next thing to make.</h1><p>Opportunities, projects and scripts — brought together in one place.</p></div>'+
+    '<div class="jobs-actions"><button class="primary" onclick="openCreate(\'opportunity\')">'+icon('plus',16)+' Post opportunity</button><button class="secondary" onclick="openCreate(\'project\')">Start project</button></div></div>'+
+    '<div class="jobs-tabs"><button class="active" onclick="setJobsView(\'opportunities\')">Opportunities</button><button onclick="setJobsView(\'projects\')">Projects</button><button onclick="setJobsView(\'scripts\')">Scripts</button></div>'+
+    '<div id="jobs-view">'+opportunitiesPage()+'</div></div>';
+}
+function setJobsView(view){
+  const box=document.getElementById('jobs-view'); if(!box)return;
+  box.innerHTML=view==='projects'?projectsPage():view==='scripts'?scriptsPage():opportunitiesPage();
+  document.querySelectorAll('.jobs-tabs button').forEach((b,i)=>b.classList.toggle('active',['opportunities','projects','scripts'][i]===view));
+}
+window.setJobsView=setJobsView;
 
 function creativeWorldHtml(){
   const featured=[
